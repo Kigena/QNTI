@@ -1,36 +1,37 @@
-# QNTI Trading System Dependencies
+# QNTI Trading System - Cloud Dependencies
+# Compatible with Linux/Docker deployment
 
-# Core Framework
+# Core Flask Framework
 Flask==2.3.3
 Flask-SocketIO==5.3.6
 Flask-CORS==4.0.0
 
-# Trading & Analysis
-MetaTrader5==5.0.45
+# Data Analysis & ML
 numpy==1.24.3
 pandas==2.0.3
-
-# ML & Data Processing
 scikit-learn==1.3.0
 scipy==1.11.1
-
-# Computer Vision (for chart analysis)
-opencv-python==4.8.0.76
 
 # HTTP & API
 requests==2.31.0
 httpx==0.24.1
 
-# Async & Concurrency
-asyncio-mqtt==0.16.1
+# Async Processing
+asyncio-mqtt==0.11.1
 
 # Database
 sqlite3  # Built-in with Python
 
+# Computer Vision
+opencv-python==4.8.0.74
+
 # Utilities
 python-dotenv==1.0.0
 pathlib2==2.3.7
-dataclasses-json==0.5.14
+dataclasses-json==0.5.9
 
-# Development & Monitoring
-psutil==5.9.5
+# MetaTrader5 - DISABLED FOR CLOUD DEPLOYMENT
+# MetaTrader5==5.0.45  # Windows only - use simulated data in cloud
+
+# Development
+Werkzeug==2.3.7
