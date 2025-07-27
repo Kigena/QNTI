@@ -258,6 +258,19 @@ class QNTIMainSystem:
         """Setup web interface with all routes"""
         # Store main system reference in Flask app for API access
         self.app.main_system = self
+        
+        # Add simple health check for Docker
+        @self.app.route('/health')
+        @self.app.route('/api/health')
+        def simple_health():
+            """Simple health check for Docker and monitoring"""
+            return jsonify({
+                "status": "healthy",
+                "timestamp": datetime.now().isoformat(),
+                "version": "QNTI v3.0",
+                "cloud_mode": True
+            })
+        
         self.web_interface = QNTIWebInterface(self.app, self.socketio, self)
         
         # Initialize LLM+MCP integration
