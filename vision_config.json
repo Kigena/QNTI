@@ -1,0 +1,24 @@
+{
+  "openai_api_key": "${OPENAI_API_KEY}",
+  "model": "gpt-4-vision-preview",
+  "max_tokens": 4000,
+  "temperature": 0.3,
+  "chart_analysis": {
+    "enable_pattern_recognition": true,
+    "enable_trend_analysis": true,
+    "enable_support_resistance": true,
+    "enable_volume_analysis": true
+  },
+  "vision_prompts": {
+    "chart_analysis": "Analyze this trading chart and identify key patterns, trends, support/resistance levels, and provide trading insights.",
+    "pattern_recognition": "Identify chart patterns such as triangles, head and shoulders, double tops/bottoms, and flag patterns.",
+    "trend_analysis": "Analyze the current trend direction and strength, identify potential reversal points.",
+    "support_resistance": "Identify key support and resistance levels, psychological levels, and price action zones."
+  },
+  "processing": {
+    "image_preprocessing": true,
+    "resize_images": true,
+    "max_image_size": "1024x1024",
+    "supported_formats": ["png", "jpg", "jpeg", "gif", "bmp"]
+  }
+}

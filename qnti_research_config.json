@@ -1,0 +1,61 @@
+{
+  "research_agent": {
+    "enabled": true,
+    "research_dir": "qnti_research",
+    "update_intervals": {
+      "high_priority": 30,
+      "medium_priority": 120,
+      "low_priority": 360
+    },
+    "rag_settings": {
+      "chunk_size": 1000,
+      "chunk_overlap": 200,
+      "similarity_top_k": 5,
+      "llm_model": "llama3",
+      "embedding_model": "llama3"
+    },
+    "sources": {
+      "federal_reserve": {
+        "enabled": true,
+        "priority": 10,
+        "keywords": [
+          "monetary policy",
+          "interest rates",
+          "inflation"
+        ]
+      },
+      "ecb": {
+        "enabled": true,
+        "priority": 9,
+        "keywords": [
+          "euro",
+          "european central bank",
+          "banking"
+        ]
+      },
+      "bank_of_england": {
+        "enabled": true,
+        "priority": 8,
+        "keywords": [
+          "gbp",
+          "uk economy",
+          "financial stability"
+        ]
+      },
+      "imf": {
+        "enabled": true,
+        "priority": 7,
+        "keywords": [
+          "global economy",
+          "crisis",
+          "growth"
+        ]
+      }
+    },
+    "filtering": {
+      "min_relevance_score": 2.0,
+      "max_documents_per_source": 10,
+      "content_min_length": 100
+    }
+  }
+}

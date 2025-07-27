@@ -1,0 +1,63 @@
+[
+  {
+    "signal": {
+      "signal_id": "BTCUSD_BUY_20250727_163845",
+      "symbol": "BTCUSD",
+      "signal_type": "buy_zone_entry",
+      "alert_level": "medium",
+      "entry_price": 118119.35,
+      "stop_loss": 117174.3952,
+      "take_profit": 119891.14025,
+      "risk_reward_ratio": 1.874999999999977,
+      "confidence": 0.8647438633938115,
+      "timeframe": "H1",
+      "timestamp": "2025-07-27T16:38:45.106333",
+      "zone_info": {
+        "signal_name": "HTF_BULLISH_RETRACEMENT",
+        "htf_bias": "bullish",
+        "zone_type": "premium",
+        "confluence_score": 3,
+        "confluence_factors": [
+          "BUY: Bullish bias in premium zone",
+          "Valid bullish bias in premium zone",
+          "HTF zones detected via fallback analysis"
+        ],
+        "structure_type": "bullish_trending",
+        "liquidity_status": "pending",
+        "setup_quality": "medium",
+        "signal_direction": "BUY"
+      },
+      "additional_data": {
+        "htf_analysis": {
+          "htf_bias": "bullish",
+          "structure_type": "bullish_trending",
+          "demand_zones": [
+            {
+              "start": 116685.51130000001,
+              "end": 117153.1887,
+              "strength": 0.6,
+              "type": "fallback_demand"
+            }
+          ],
+          "supply_zones": [],
+          "recent_choch": null,
+          "previous_bos": null,
+          "structure_events": {
+            "bos_high": null,
+            "bos_low": null,
+            "choch_high": null,
+            "choch_low": 116919.35,
+            "trend_bias": "bullish"
+          },
+          "liquidity_sweeps": [],
+          "retracement_context": null,
+          "fallback_used": true,
+          "bias_score": 4,
+          "bias_factors": [
+            "Bullish SMA alignment",
+            "Price above SMA20",
+            "Price in upper range"
+          ]
+        },
+        "zone_analysis": {
+          "valid_zone": 

@@ -1,0 +1,857 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trading Opportunities - QNTI</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    
+    <style>
+        :root {
+            --primary-color: #1e3d59;
+            --secondary-color: #f5c842;
+            --success-color: #28a745;
+            --danger-color: #dc3545;
+            --warning-color: #ffc107;
+            --info-color: #17a2b8;
+        }
+
+        body {
+            background: linear-gradient(135deg, #1e3d59 0%, #2c5282 100%);
+            color: #ffffff;
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .navbar {
+            background: rgba(30, 61, 89, 0.95) !important;
+            backdrop-filter: blur(10px);
+            border-bottom: 2px solid var(--secondary-color);
+        }
+
+        .navbar-brand {
+            font-weight: bold;
+            font-size: 1.5rem;
+            color: var(--secondary-color) !important;
+        }
+
+        .container-fluid {
+            padding-top: 20px;
+        }
+
+        .opportunity-card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 15px;
+            margin-bottom: 20px;
+            padding: 20px;
+            transition: all 0.3s ease;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+
+        .opportunity-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
+            border-color: var(--secondary-color);
+        }
+
+        .probability-score {
+            font-size: 2.5rem;
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: 10px;
+        }
+
+        .score-excellent { color: #00ff88; }
+        .score-good { color: #88ff00; }
+        .score-fair { color: #ffaa00; }
+        .score-poor { color: #ff5500; }
+
+        .risk-badge {
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        .risk-low { background-color: var(--success-color); }
+        .risk-medium { background-color: var(--warning-color); color: #000; }
+        .risk-high { background-color: var(--danger-color); }
+        .risk-extreme { background-color: #8b0000; }
+
+        .opportunity-type-badge {
+            padding: 8px 16px;
+            border-radius: 25px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .type-smc_signal { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+        .type-ea_strategy { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); }
+        .type-vision_analysis { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); }
+        .type-backtest_result { background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); }
+
+        .summary-card {
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 20px;
+            padding: 25px;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .summary-number {
+            font-size: 3rem;
+            font-weight: bold;
+            color: var(--secondary-color);
+            display: block;
+        }
+
+        .summary-label {
+            font-size: 1.1rem;
+            color: rgba(255, 255, 255, 0.8);
+            margin-top: 5px;
+        }
+
+        .filters-panel {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 25px;
+        }
+
+        .btn-custom {
+            background: linear-gradient(135deg, var(--secondary-color) 0%, #e6b800 100%);
+            border: none;
+            color: #000;
+            font-weight: bold;
+            padding: 10px 25px;
+            border-radius: 25px;
+            transition: all 0.3s ease;
+        }
+
+        .btn-custom:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(245, 200, 66, 0.4);
+            color: #000;
+        }
+
+        .trade-direction-buy {
+            color: var(--success-color);
+            font-weight: bold;
+        }
+
+        .trade-direction-sell {
+            color: var(--danger-color);
+            font-weight: bold;
+        }
+
+        .supporting-factors, .risk-factors {
+            margin-top: 15px;
+        }
+
+        .factor-item {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 8px 15px;
+            margin: 5px 0;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            display: inline-block;
+            margin-right: 10px;
+        }
+
+        .supporting-factor {
+            border-left: 4px solid var(--success-color);
+        }
+
+        .risk-factor {
+            border-left: 4px solid var(--danger-color);
+        }
+
+        .loading-spinner {
+            display: none;
+            text-align: center;
+            padding: 40px;
+        }
+
+        .no-opportunities {
+            text-align: center;
+            padding: 60px 20px;
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        .refresh-indicator {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            background: var(--success-color);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 25px;
+            display: none;
+            animation: fadeInOut 2s ease-in-out;
+        }
+
+        @keyframes fadeInOut {
+            0%, 100% { opacity: 0; transform: translateY(-20px); }
+            50% { opacity: 1; transform: translateY(0); }
+        }
+
+        .expiry-warning {
+            color: var(--warning-color);
+            font-size: 0.9rem;
+            margin-top: 5px;
+        }
+
+        .expiry-urgent {
+            color: var(--danger-color);
+            font-weight: bold;
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        @media (max-width: 768px) {
+            .opportunity-card {
+                margin-bottom: 15px;
+                padding: 15px;
+            }
+            
+            .probability-score {
+                font-size: 2rem;
+            }
+            
+            .summary-number {
+                font-size: 2.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="#"><i class="fas fa-chart-line"></i> QNTI Trading Opportunities</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/dashboard/main_dashboard.html">
+                            <i class="fas fa-home"></i> Dashboard
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/dashboard/trading_center.html">
+                            <i class="fas fa-chart-candlestick"></i> Trading Center
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/dashboard/ea_management.html">
+                            <i class="fas fa-robot"></i> EA Management
+                        </a>
+                    </li>
+                </ul>
+                <div class="d-flex align-items-center">
+                    <button class="btn btn-custom me-2" onclick="toggleMonitoring()">
+                        <i class="fas fa-play" id="monitoring-icon"></i>
+                        <span id="monitoring-text">Start Monitoring</span>
+                    </button>
+                    <button class="btn btn-outline-light" onclick="refreshOpportunities()">
+                        <i class="fas fa-sync-alt" id="refresh-icon"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Refresh Indicator -->
+    <div class="refresh-indicator" id="refresh-indicator">
+        <i class="fas fa-check"></i> Opportunities Updated
+    </div>
+
+    <div class="container-fluid">
+        <!-- Summary Cards -->
+        <div class="row mb-4">
+            <div class="col-md-3 col-sm-6 mb-3">
+                <div class="summary-card">
+                    <span class="summary-number" id="total-opportunities">0</span>
+                    <div class="summary-label">Total Opportunities</div>
+                </div>
+            </div>
+            <div class="col-md-3 col-sm-6 mb-3">
+                <div class="summary-card">
+                    <span class="summary-number" id="avg-probability">0%</span>
+                    <div class="summary-label">Average Probability</div>
+                </div>
+            </div>
+            <div class="col-md-3 col-sm-6 mb-3">
+                <div class="summary-card">
+                    <span class="summary-number" id="high-prob-count">0</span>
+                    <div class="summary-label">High Probability (>80%)</div>
+                </div>
+            </div>
+            <div class="col-md-3 col-sm-6 mb-3">
+                <div class="summary-card">
+                    <span class="summary-number" id="active-symbols">0</span>
+                    <div class="summary-label">Active Symbols</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Filters Panel -->
+        <div class="filters-panel">
+            <div class="row align-items-center">
+                <div class="col-md-2">
+                    <label for="symbol-filter" class="form-label">Symbol</label>
+                    <select class="form-select" id="symbol-filter">
+                        <option value="">All Symbols</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label for="type-filter" class="form-label">Type</label>
+                    <select class="form-select" id="type-filter">
+                        <option value="">All Types</option>
+                        <option value="smc_signal">SMC Signal</option>
+                        <option value="ea_strategy">EA Strategy</option>
+                        <option value="vision_analysis">Vision Analysis</option>
+                        <option value="backtest_result">Backtest Result</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label for="risk-filter" class="form-label">Risk Level</label>
+                    <select class="form-select" id="risk-filter">
+                        <option value="">All Risk Levels</option>
+                        <option value="low">Low</option>
+                        <option value="medium">Medium</option>
+                        <option value="high">High</option>
+                        <option value="extreme">Extreme</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label for="min-probability" class="form-label">Min Probability</label>
+                    <input type="range" class="form-range" id="min-probability" min="0" max="100" value="0" step="5">
+                    <div class="text-center"><span id="min-prob-value">0%</span></div>
+                </div>
+                <div class="col-md-2">
+                    <label for="sort-by" class="form-label">Sort By</label>
+                    <select class="form-select" id="sort-by">
+                        <option value="probability">Probability</option>
+                        <option value="created_at">Created Time</option>
+                        <option value="risk_reward_ratio">Risk/Reward</option>
+                        <option value="expires_at">Expiry Time</option>
+                    </select>
+                </div>
+                <div class="col-md-2 d-flex align-items-end">
+                    <button class="btn btn-custom w-100" onclick="applyFilters()">
+                        <i class="fas fa-filter"></i> Apply Filters
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Loading Spinner -->
+        <div class="loading-spinner" id="loading-spinner">
+            <div class="spinner-border text-warning" style="width: 3rem; height: 3rem;"></div>
+            <div class="mt-3">Loading opportunities...</div>
+        </div>
+
+        <!-- No Opportunities Message -->
+        <div class="no-opportunities" id="no-opportunities" style="display: none;">
+            <i class="fas fa-search fa-3x mb-3"></i>
+            <h3>No Trading Opportunities Found</h3>
+            <p>Try adjusting your filters or start monitoring to detect new opportunities.</p>
+        </div>
+
+        <!-- Opportunities Grid -->
+        <div class="row" id="opportunities-container">
+            <!-- Opportunities will be loaded here -->
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        let opportunities = [];
+        let isMonitoring = false;
+        let refreshInterval = null;
+
+        // Initialize the page
+        document.addEventListener('DOMContentLoaded', function() {
+            loadOpportunities();
+            initializeFilters();
+            
+            // Auto-refresh every 30 seconds if monitoring is enabled
+            refreshInterval = setInterval(() => {
+                if (isMonitoring) {
+                    loadOpportunities(true); // Silent refresh
+                }
+            }, 30000);
+        });
+
+        function initializeFilters() {
+            // Initialize probability range slider
+            const probSlider = document.getElementById('min-probability');
+            const probValue = document.getElementById('min-prob-value');
+            
+            probSlider.addEventListener('input', function() {
+                probValue.textContent = this.value + '%';
+            });
+
+            // Add event listeners for real-time filtering
+            ['symbol-filter', 'type-filter', 'risk-filter', 'sort-by'].forEach(id => {
+                document.getElementById(id).addEventListener('change', applyFilters);
+            });
+        }
+
+        async function loadOpportunities(silent = false) {
+            if (!silent) {
+                showLoading();
+            }
+
+            try {
+                const response = await fetch('/api/trading-opportunities');
+                const data = await response.json();
+
+                if (data.success) {
+                    opportunities = data.opportunities;
+                    updateSummary();
+                    updateSymbolFilter();
+                    displayOpportunities(opportunities);
+                    
+                    if (silent) {
+                        showRefreshIndicator();
+                    }
+                } else {
+                    console.error('Error loading opportunities:', data.error);
+                    showNoOpportunities();
+                }
+            } catch (error) {
+                console.error('Error loading opportunities:', error);
+                showNoOpportunities();
+            } finally {
+                hideLoading();
+            }
+        }
+
+        async function loadSummary() {
+            try {
+                const response = await fetch('/api/trading-opportunities/summary');
+                const data = await response.json();
+
+                if (data.success) {
+                    const summary = data.summary;
+                    document.getElementById('total-opportunities').textContent = summary.total_opportunities;
+                    document.getElementById('avg-probability').textContent = Math.round(summary.avg_probability * 100) + '%';
+                    document.getElementById('active-symbols').textContent = summary.symbols.length;
+                }
+            } catch (error) {
+                console.error('Error loading summary:', error);
+            }
+        }
+
+        function updateSummary() {
+            const totalCount = opportunities.length;
+            const avgProbability = totalCount > 0 ? 
+                opportunities.reduce((sum, opp) => sum + opp.probability_score, 0) / totalCount : 0;
+            const highProbCount = opportunities.filter(opp => opp.probability_score > 0.8).length;
+            const symbols = [...new Set(opportunities.map(opp => opp.symbol))];
+
+            document.getElementById('total-opportunities').textContent = totalCount;
+            document.getElementById('avg-probability').textContent = Math.round(avgProbability * 100) + '%';
+            document.getElementById('high-prob-count').textContent = highProbCount;
+            document.getElementById('active-symbols').textContent = symbols.length;
+        }
+
+        function updateSymbolFilter() {
+            const symbolFilter = document.getElementById('symbol-filter');
+            const currentValue = symbolFilter.value;
+            
+            // Clear existing options except "All Symbols"
+            symbolFilter.innerHTML = '<option value="">All Symbols</option>';
+            
+            // Get unique symbols
+            const symbols = [...new Set(opportunities.map(opp => opp.symbol))].sort();
+            
+            symbols.forEach(symbol => {
+                const option = document.createElement('option');
+                option.value = symbol;
+                option.textContent = symbol;
+                symbolFilter.appendChild(option);
+            });
+            
+            // Restore previous selection if it still exists
+            if (symbols.includes(currentValue)) {
+                symbolFilter.value = currentValue;
+            }
+        }
+
+        function displayOpportunities(oppList) {
+            const container = document.getElementById('opportunities-container');
+            
+            if (oppList.length === 0) {
+                showNoOpportunities();
+                return;
+            }
+
+            container.innerHTML = '';
+            
+            oppList.forEach(opportunity => {
+                const oppCard = createOpportunityCard(opportunity);
+                container.appendChild(oppCard);
+            });
+
+            hideNoOpportunities();
+        }
+
+        function createOpportunityCard(opportunity) {
+            const col = document.createElement('div');
+            col.className = 'col-lg-6 col-xl-4';
+            
+            const probabilityPercent = Math.round(opportunity.probability_score * 100);
+            const probabilityClass = getProbabilityClass(opportunity.probability_score);
+            const typeClass = `type-${opportunity.opportunity_type}`;
+            const riskClass = `risk-${opportunity.risk_level}`;
+            const directionClass = opportunity.trade_direction === 'BUY' ? 'trade-direction-buy' : 'trade-direction-sell';
+            
+            // Calculate time to expiry
+            const expiryInfo = getExpiryInfo(opportunity.expires_at);
+            
+            col.innerHTML = `
+                <div class="opportunity-card">
+                    <div class="row">
+                        <div class="col-4">
+                            <div class="probability-score ${probabilityClass}">
+                                ${probabilityPercent}%
+                            </div>
+                            <div class="text-center">
+                                <span class="risk-badge ${riskClass}">${opportunity.risk_level}</span>
+                            </div>
+                        </div>
+                        <div class="col-8">
+                            <div class="mb-2">
+                                <span class="opportunity-type-badge ${typeClass}">
+                                    ${formatOpportunityType(opportunity.opportunity_type)}
+                                </span>
+                            </div>
+                            <h5 class="mb-2">
+                                <strong>${opportunity.symbol}</strong> 
+                                <span class="${directionClass}">${opportunity.trade_direction}</span>
+                            </h5>
+                            <div class="row text-center">
+                                <div class="col-4">
+                                    <small class="text-muted">Entry</small><br>
+                                    <strong>${opportunity.entry_price.toFixed(5)}</strong>
+                                </div>
+                                <div class="col-4">
+                                    <small class="text-muted">SL</small><br>
+                                    <strong>${opportunity.stop_loss.toFixed(5)}</strong>
+                                </div>
+                                <div class="col-4">
+                                    <small class="text-muted">TP</small><br>
+                                    <strong>${opportunity.take_profit.toFixed(5)}</strong>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row mt-3">
+                        <div class="col-6">
+                            <small class="text-muted">Risk/Reward</small><br>
+                            <strong>1:${opportunity.risk_reward_ratio.toFixed(2)}</strong>
+                        </div>
+                        <div class="col-6">
+                            <small class="text-muted">Timeframe</small><br>
+                            <strong>${opportunity.timeframe}</strong>
+                        </div>
+                    </div>
+                    
+                    ${expiryInfo.html}
+                    
+                    <div class="supporting-factors">
+                        <strong><i class="fas fa-plus-circle text-success"></i> Supporting Factors:</strong>
+                        <div class="mt-2">
+                            ${opportunity.supporting_factors.map(factor => 
+                                `<span class="factor-item supporting-factor">${factor}</span>`
+                            ).join('')}
+                        </div>
+                    </div>
+                    
+                    ${opportunity.risk_factors.length > 0 ? `
+                    <div class="risk-factors">
+                        <strong><i class="fas fa-exclamation-triangle text-warning"></i> Risk Factors:</strong>
+                        <div class="mt-2">
+                            ${opportunity.risk_factors.map(factor => 
+                                `<span class="factor-item risk-factor">${factor}</span>`
+                            ).join('')}
+                        </div>
+                    </div>
+                    ` : ''}
+                    
+                    <div class="text-center mt-3">
+                        <button class="btn btn-custom" onclick="viewOpportunityDetails('${opportunity.opportunity_id}')">
+                            <i class="fas fa-info-circle"></i> View Details
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            return col;
+        }
+
+        function getProbabilityClass(score) {
+            if (score >= 0.8) return 'score-excellent';
+            if (score >= 0.65) return 'score-good';
+            if (score >= 0.5) return 'score-fair';
+            return 'score-poor';
+        }
+
+        function formatOpportunityType(type) {
+            return type.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+        }
+
+        function getExpiryInfo(expiresAt) {
+            if (!expiresAt) {
+                return { html: '', isUrgent: false };
+            }
+            
+            const expiryTime = new Date(expiresAt);
+            const now = new Date();
+            const timeLeft = expiryTime - now;
+            const hoursLeft = Math.floor(timeLeft / (1000 * 60 * 60));
+            const minutesLeft = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
+            
+            let expiryText = '';
+            let expiryClass = 'expiry-warning';
+            
+            if (timeLeft <= 0) {
+                expiryText = 'EXPIRED';
+                expiryClass = 'expiry-urgent';
+            } else if (hoursLeft < 1) {
+                expiryText = `Expires in ${minutesLeft}m`;
+                expiryClass = 'expiry-urgent';
+            } else if (hoursLeft < 24) {
+                expiryText = `Expires in ${hoursLeft}h ${minutesLeft}m`;
+                if (hoursLeft < 2) expiryClass = 'expiry-urgent';
+            } else {
+                const daysLeft = Math.floor(hoursLeft / 24);
+                expiryText = `Expires in ${daysLeft}d`;
+            }
+            
+            return {
+                html: `<div class="text-center mt-2"><small class="${expiryClass}"><i class="fas fa-clock"></i> ${expiryText}</small></div>`,
+                isUrgent: expiryClass === 'expiry-urgent'
+            };
+        }
+
+        function applyFilters() {
+            const symbolFilter = document.getElementById('symbol-filter').value;
+            const typeFilter = document.getElementById('type-filter').value;
+            const riskFilter = document.getElementById('risk-filter').value;
+            const minProbability = document.getElementById('min-probability').value / 100;
+            const sortBy = document.getElementById('sort-by').value;
+            
+            let filtered = opportunities.filter(opp => {
+                if (symbolFilter && opp.symbol !== symbolFilter) return false;
+                if (typeFilter && opp.opportunity_type !== typeFilter) return false;
+                if (riskFilter && opp.risk_level !== riskFilter) return false;
+                if (opp.probability_score < minProbability) return false;
+                return true;
+            });
+            
+            // Sort opportunities
+            filtered.sort((a, b) => {
+                switch (sortBy) {
+                    case 'probability':
+                        return b.probability_score - a.probability_score;
+                    case 'created_at':
+                        return new Date(b.created_at) - new Date(a.created_at);
+                    case 'risk_reward_ratio':
+                        return b.risk_reward_ratio - a.risk_reward_ratio;
+                    case 'expires_at':
+                        if (!a.expires_at && !b.expires_at) return 0;
+                        if (!a.expires_at) return 1;
+                        if (!b.expires_at) return -1;
+                        return new Date(a.expires_at) - new Date(b.expires_at);
+                    default:
+                        return 0;
+                }
+            });
+            
+            displayOpportunities(filtered);
+        }
+
+        async function toggleMonitoring() {
+            const icon = document.getElementById('monitoring-icon');
+            const text = document.getElementById('monitoring-text');
+            
+            try {
+                if (isMonitoring) {
+                    // Stop monitoring
+                    const response = await fetch('/api/trading-opportunities/stop-monitoring', {
+                        method: 'POST'
+                    });
+                    
+                    if (response.ok) {
+                        isMonitoring = false;
+                        icon.className = 'fas fa-play';
+                        text.textContent = 'Start Monitoring';
+                    }
+                } else {
+                    // Start monitoring
+                    const response = await fetch('/api/trading-opportunities/start-monitoring', {
+                        method: 'POST'
+                    });
+                    
+                    if (response.ok) {
+                        isMonitoring = true;
+                        icon.className = 'fas fa-pause';
+                        text.textContent = 'Stop Monitoring';
+                    }
+                }
+            } catch (error) {
+                console.error('Error toggling monitoring:', error);
+            }
+        }
+
+        function refreshOpportunities() {
+            const refreshIcon = document.getElementById('refresh-icon');
+            refreshIcon.className = 'fas fa-sync-alt fa-spin';
+            
+            loadOpportunities().finally(() => {
+                refreshIcon.className = 'fas fa-sync-alt';
+            });
+        }
+
+        function viewOpportunityDetails(opportunityId) {
+            const opportunity = opportunities.find(opp => opp.opportunity_id === opportunityId);
+            if (!opportunity) return;
+            
+            // Create and show modal with detailed information
+            const modalHtml = `
+                <div class="modal fade" id="detailsModal" tabindex="-1">
+                    <div class="modal-dialog modal-lg">
+                        <div class="modal-content bg-dark text-light">
+                            <div class="modal-header">
+                                <h5 class="modal-title">Opportunity Details: ${opportunity.symbol}</h5>
+                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                            </div>
+                            <div class="modal-body">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <h6>Trading Information</h6>
+                                        <table class="table table-dark table-sm">
+                                            <tr><td>Symbol:</td><td>${opportunity.symbol}</td></tr>
+                                            <tr><td>Direction:</td><td class="${opportunity.trade_direction === 'BUY' ? 'text-success' : 'text-danger'}">${opportunity.trade_direction}</td></tr>
+                                            <tr><td>Entry Price:</td><td>${opportunity.entry_price}</td></tr>
+                                            <tr><td>Stop Loss:</td><td>${opportunity.stop_loss}</td></tr>
+                                            <tr><td>Take Profit:</td><td>${opportunity.take_profit}</td></tr>
+                                            <tr><td>Risk/Reward:</td><td>1:${opportunity.risk_reward_ratio.toFixed(2)}</td></tr>
+                                            <tr><td>Timeframe:</td><td>${opportunity.timeframe}</td></tr>
+                                        </table>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <h6>Scoring & Risk</h6>
+                                        <table class="table table-dark table-sm">
+                                            <tr><td>Probability Score:</td><td>${Math.round(opportunity.probability_score * 100)}%</td></tr>
+                                            <tr><td>Confidence:</td><td>${Math.round(opportunity.confidence_level * 100)}%</td></tr>
+                                            <tr><td>Risk Level:</td><td><span class="risk-badge ${getRiskClass(opportunity.risk_level)}">${opportunity.risk_level}</span></td></tr>
+                                            <tr><td>Type:</td><td>${formatOpportunityType(opportunity.opportunity_type)}</td></tr>
+                                            <tr><td>Created:</td><td>${new Date(opportunity.created_at).toLocaleString()}</td></tr>
+                                            ${opportunity.expires_at ? `<tr><td>Expires:</td><td>${new Date(opportunity.expires_at).toLocaleString()}</td></tr>` : ''}
+                                        </table>
+                                    </div>
+                                </div>
+                                
+                                <h6 class="mt-3">Market Conditions</h6>
+                                <div class="alert alert-info">
+                                    <pre>${JSON.stringify(opportunity.market_conditions, null, 2)}</pre>
+                                </div>
+                                
+                                <h6>Historical Performance</h6>
+                                <div class="row">
+                                    ${opportunity.win_rate_historical ? `<div class="col-md-4"><strong>Win Rate:</strong> ${opportunity.win_rate_historical.toFixed(1)}%</div>` : ''}
+                                    ${opportunity.profit_factor_historical ? `<div class="col-md-4"><strong>Profit Factor:</strong> ${opportunity.profit_factor_historical.toFixed(2)}</div>` : ''}
+                                    ${opportunity.max_drawdown_historical ? `<div class="col-md-4"><strong>Max Drawdown:</strong> ${opportunity.max_drawdown_historical.toFixed(1)}%</div>` : ''}
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                <button type="button" class="btn btn-custom" onclick="executeOpportunity('${opportunity.opportunity_id}')">Execute Trade</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // Remove existing modal if any
+            const existingModal = document.getElementById('detailsModal');
+            if (existingModal) {
+                existingModal.remove();
+            }
+            
+            // Add modal to body
+            document.body.insertAdjacentHTML('beforeend', modalHtml);
+            
+            // Show modal
+            const modal = new bootstrap.Modal(document.getElementById('detailsModal'));
+            modal.show();
+        }
+
+        function getRiskClass(riskLevel) {
+            return `risk-${riskLevel}`;
+        }
+
+        function executeOpportunity(opportunityId) {
+            // This would integrate with the trading system
+            alert(`Execute trade for opportunity: ${opportunityId}`);
+            // Close modal
+            bootstrap.Modal.getInstance(document.getElementById('detailsModal')).hide();
+        }
+
+        function showLoading() {
+            document.getElementById('loading-spinner').style.display = 'block';
+            document.getElementById('opportunities-container').style.display = 'none';
+            document.getElementById('no-opportunities').style.display = 'none';
+        }
+
+        function hideLoading() {
+            document.getElementById('loading-spinner').style.display = 'none';
+            document.getElementById('opportunities-container').style.display = 'flex';
+        }
+
+        function showNoOpportunities() {
+            document.getElementById('opportunities-container').style.display = 'none';
+            document.getElementById('no-opportunities').style.display = 'block';
+        }
+
+        function hideNoOpportunities() {
+            document.getElementById('no-opportunities').style.display = 'none';
+        }
+
+        function showRefreshIndicator() {
+            const indicator = document.getElementById('refresh-indicator');
+            indicator.style.display = 'block';
+            setTimeout(() => {
+                indicator.style.display = 'none';
+            }, 2000);
+        }
+    </script>
+</body>
+</html> 

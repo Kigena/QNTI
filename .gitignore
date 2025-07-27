@@ -1,0 +1,117 @@
+# QNTI Trading System - Git Ignore
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+pip-wheel-metadata/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Environment variables
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# API Keys and Secrets
+*api_key*
+*openai*
+*.key
+openai_config.json
+api_keys.json
+
+# Logs
+logs/
+*.log
+smc_logs.txt
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+data/
+
+# Trading data
+*.csv
+*.json.bak
+config_backup/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# MetaTrader
+*.exe
+MT5/
+terminal64.exe
+
+# Temporary files
+temp/
+tmp/
+*.tmp
+
+# Secrets
+secrets/
+credentials/
+*.key
+*.pem
+*.p12
+
+# Node modules (if any)
+node_modules/
+
+# Coverage
+.coverage
+htmlcov/
+
+# pytest
+.pytest_cache/
+
+# Virtual environments
+venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+my_openai_env/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# pyenv
+.python-version
+
+# Backup files
+*.bak
+*.backup

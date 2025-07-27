@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SMC Reactor Animation Demo</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            color: #e2e8f0;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+        }
+
+        .demo-title {
+            font-size: 3rem;
+            margin-bottom: 2rem;
+            background: linear-gradient(45deg, #4ecdc4, #2196F3);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-align: center;
+        }
+
+        .demo-subtitle {
+            font-size: 1.2rem;
+            color: #94a3b8;
+            margin-bottom: 3rem;
+            text-align: center;
+        }
+
+        /* Enhanced Control Panel */
+        .control-panel-enhanced {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 2rem;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            position: relative;
+            overflow: hidden;
+            max-width: 600px;
+            width: 100%;
+        }
+
+        .control-panel-enhanced::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(45deg, rgba(78, 205, 196, 0.1), rgba(33, 150, 243, 0.1));
+            opacity: 0;
+            transition: opacity 0.3s;
+            pointer-events: none;
+        }
+
+        .control-panel-enhanced.reactor-running::before {
+            opacity: 1;
+            animation: backgroundPulse 4s ease-in-out infinite;
+        }
+
+        .panel-title {
+            font-size: 1.5rem;
+            text-align: center;
+            margin-bottom: 2rem;
+            color: #f1f5f9;
+        }
+
+        /* Reactor Animation Styles */
+        .reactor-container {
+            position: relative;
+            width: 200px;
+            height: 200px;
+            margin: 2rem auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .reactor-core {
+            position: absolute;
+            width: 80px;
+            height: 80px;
+            background: radial-gradient(circle, #4ecdc4, #2196F3, #0066cc);
+            border-radius: 50%;
+            box-shadow: 
+                0 0 20px #4ecdc4,
+                0 0 40px #4ecdc4,
+                0 0 60px #4ecdc4,
+                inset 0 0 20px #ffffff;
+            animation: reactorPulse 2s ease-in-out infinite;
+            z-index: 10;
+        }
+
+        .reactor-core.stopped {
+            background: radial-gradient(circle, #ff6b6b, #ff4444, #cc0000);
+            box-shadow: 
+                0 0 20px #ff6b6b,
+                0 0 40px #ff6b6b,
+                0 0 60px #ff6b6b,
+                inset 0 0 20px #ffffff;
+            animation: reactorPulseStop 3s ease-in-out infinite;
+        }
+
+        .energy-ring {
+            position: absolute;
+            border: 2px solid #4ecdc4;
+            border-radius: 50%;
+            opacity: 0;
+            animation: energyRingExpand 3s linear infinite;
+        }
+
+        .energy-ring.stopped {
+            border-color: #ff6b6b;
+            animation: energyRingExpandStop 4s linear infinite;
+        }
+
+        .energy-ring:nth-child(2) { animation-delay: 0.5s; }
+        .energy-ring:nth-child(3) { animation-delay: 1s; }
+        .energy-ring:nth-child(4) { animation-delay: 1.5s; }
+        .energy-ring:nth-child(5) { animation-delay: 2s; }
+        .energy-ring:nth-child(6) { animation-delay: 2.5s; }
+
+        .particle {
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            background: #4ecdc4;
+            border-radius: 50%;
+            box-shadow: 0 0 6px #4ecdc4;
+            animation: particleFloat 4s linear infinite;
+        }
+
+        .particle.stopped {
+            background: #ff6b6b;
+            box-shadow: 0 0 6px #ff6b6b;
+            animation: particleFloatStop 5s linear infinite;
+        }
+
+        .energy-beam {
+            position: absolute;
+            width: 2px;
+            height: 100px;
+            background: linear-gradient(to top, transparent, #4ecdc4, transparent);
+            transform-origin: bottom;
+            animation: energyBeamRotate 8s linear infinite;
+        }
+
+        .energy-beam.stopped {
+            background: linear-gradient(to top, transparent, #ff6b6b, transparent);
+            animation: energyBeamRotateStop 12s linear infinite;
+        }
+
+        .energy-beam:nth-child(1) { transform: rotate(0deg); }
+        .energy-beam:nth-child(2) { transform: rotate(60deg); }
+        .energy-beam:nth-child(3) { transform: rotate(120deg); }
+        .energy-beam:nth-child(4) { transform: rotate(180deg); }
+        .energy-beam:nth-child(5) { transform: rotate(240deg); }
+        .energy-beam:nth-child(6) { transform: rotate(300deg); }
+
+        .reactor-status-text {
+            position: absolute;
+            bottom: -30px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 1.2rem;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: #4ecdc4;
+            text-shadow: 0 0 10px #4ecdc4;
+            animation: statusTextGlow 2s ease-in-out infinite;
+        }
+
+        .reactor-status-text.stopped {
+            color: #ff6b6b;
+            text-shadow: 0 0 10px #ff6b6b;
+            animation: statusTextGlowStop 3s ease-in-out infinite;
+        }
+
+        .demo-controls {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            margin-top: 2rem;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-primary {
+            background: linear-gradient(45deg, #4ecdc4, #44a08d);
+            color: white;
+        }
+
+        .btn-danger {
+            background: linear-gradient(45deg, #ff6b6b, #ee5a52);
+            color: white;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        /* Keyframe Animations */
+        @keyframes reactorPulse {
+            0%, 100% { 
+                transform: scale(1);
+                box-shadow: 
+                    0 0 20px #4ecdc4,
+                    0 0 40px #4ecdc4,
+                    0 0 60px #4ecdc4,
+                    inset 0 0 20px #ffffff;
+            }
+            50% { 
+                transform: scale(1.1);
+                box-shadow: 
+                    0 0 30px #4ecdc4,
+                    0 0 60px #4ecdc4,
+                    0 0 90px #4ecdc4,
+                    inset 0 0 30px #ffffff;
+            }
+        }
+
+        @keyframes reactorPulseStop {
+            0%, 100% { 
+                transform: scale(1);
+                box-shadow: 
+                    0 0 10px #ff6b6b,
+                    0 0 20px #ff6b6b,
+                    0 0 30px #ff6b6b,
+                    inset 0 0 10px #ffffff;
+            }
+            50% { 
+                transform: scale(1.05);
+                box-shadow: 
+                    0 0 15px #ff6b6b,
+                    0 0 30px #ff6b6b,
+                    0 0 45px #ff6b6b,
+                    inset 0 0 15px #ffffff;
+            }
+        }
+
+        @keyframes energyRingExpand {
+            0% {
+                width: 80px;
+                height: 80px;
+                opacity: 1;
+                border-width: 3px;
+            }
+            100% {
+                width: 200px;
+                height: 200px;
+                opacity: 0;
+                border-width: 1px;
+            }
+        }
+
+        @keyframes energyRingExpandStop {
+            0% {
+                width: 80px;
+                height: 80px;
+                opacity: 0.6;
+                border-width: 2px;
+            }
+            100% {
+                width: 160px;
+                height: 160px;
+                opacity: 0;
+                border-width: 1px;
+            }
+        }
+
+        @keyframes particleFloat {
+            0% {
+                transform: translateY(0) rotate(0deg);
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.7;
+            }
+            100% {
+                transform: translateY(-100px) rotate(360deg);
+                opacity: 0;
+            }
+        }
+
+        @keyframes particleFloatStop {
+            0% {
+                transform: translateY(0) rotate(0deg);
+                opacity: 0.6;
+            }
+            50% {
+                opacity: 0.3;
+            }
+            100% {
+                transform: translateY(-60px) rotate(180deg);
+                opacity: 0;
+            }
+        }
+
+        @keyframes energyBeamRotate {
+            0% { transform: rotate(0deg); opacity: 0.8; }
+            50% { opacity: 1; }
+            100% { transform: rotate(360deg); opacity: 0.8; }
+        }
+
+        @keyframes energyBeamRotateStop {
+            0% { transform: rotate(0deg); opacity: 0.3; }
+            50% { opacity: 0.5; }
+            100% { transform: rotate(180deg); opacity: 0.3; }
+        }
+
+        @keyframes statusTextGlow {
+            0%, 100% { 
+                text-shadow: 0 0 10px #4ecdc4;
+            }
+            50% { 
+                text-shadow: 0 0 20px #4ecdc4, 0 0 30px #4ecdc4;
+            }
+        }
+
+        @keyframes statusTextGlowStop {
+            0%, 100% { 
+                text-shadow: 0 0 5px #ff6b6b;
+            }
+            50% { 
+                text-shadow: 0 0 10px #ff6b6b, 0 0 15px #ff6b6b;
+            }
+        }
+
+        @keyframes backgroundPulse {
+            0%, 100% { opacity: 0.1; }
+            50% { opacity: 0.3; }
+        }
+
+        .info-text {
+            text-align: center;
+            margin-top: 2rem;
+            color: #94a3b8;
+            font-size: 0.9rem;
+            max-width: 500px;
+        }
+    </style>
+</head>
+<body>
+    <div class="demo-title">🚀 SMC Reactor Core</div>
+    <div class="demo-subtitle">Futuristic Animation Demo for Smart Money Concepts Automation</div>
+
+    <div id="controlPanel" class="control-panel-enhanced">
+        <h2 class="panel-title"><i class="fas fa-atom"></i> SMC Reactor Core Control</h2>
+        
+        <!-- Futuristic Reactor Animation -->
+        <div class="reactor-container">
+            <!-- Energy Beams -->
+            <div class="energy-beam stopped"></div>
+            <div class="energy-beam stopped"></div>
+            <div class="energy-beam stopped"></div>
+            <div class="energy-beam stopped"></div>
+            <div class="energy-beam stopped"></div>
+            <div class="energy-beam stopped"></div>
+            
+            <!-- Energy Rings -->
+            <div class="energy-ring stopped"></div>
+            <div class="energy-ring stopped"></div>
+            <div class="energy-ring stopped"></div>
+            <div class="energy-ring stopped"></div>
+            <div class="energy-ring stopped"></div>
+            
+            <!-- Reactor Core -->
+            <div id="reactorCore" class="reactor-core stopped"></div>
+            
+            <!-- Floating Particles -->
+            <div class="particle stopped" style="top: 20%; left: 30%; animation-delay: 0s;"></div>
+            <div class="particle stopped" style="top: 40%; left: 70%; animation-delay: 1s;"></div>
+            <div class="particle stopped" style="top: 60%; left: 20%; animation-delay: 2s;"></div>
+            <div class="particle stopped" style="top: 80%; left: 80%; animation-delay: 3s;"></div>
+            <div class="particle stopped" style="top: 30%; left: 50%; animation-delay: 0.5s;"></div>
+            <div class="particle stopped" style="top: 70%; left: 40%; animation-delay: 1.5s;"></div>
+            <div class="particle stopped" style="top: 10%; left: 60%; animation-delay: 2.5s;"></div>
+            <div class="particle stopped" style="top: 90%; left: 25%; animation-delay: 3.5s;"></div>
+            
+            <!-- Status Text -->
+            <div id="reactorStatusText" class="reactor-status-text stopped">OFFLINE</div>
+        </div>
+        
+        <div class="demo-controls">
+            <button id="activateBtn" class="btn btn-primary">
+                <i class="fas fa-power-off"></i> Activate Reactor
+            </button>
+            <button id="deactivateBtn" class="btn btn-danger">
+                <i class="fas fa-stop"></i> Shutdown Reactor
+            </button>
+        </div>
+    </div>
+
+    <div class="info-text">
+        This reactor animation shows when SMC automation is running. When active, you'll see:
+        <br>• Pulsing energy core with dynamic glow effects
+        <br>• Expanding energy rings emanating from the core
+        <br>• Rotating energy beams scanning the perimeter
+        <br>• Floating energy particles in motion
+        <br>• Dynamic color changes (blue = online, red = offline)
+    </div>
+
+    <script>
+        class ReactorDemo {
+            constructor() {
+                this.isActive = false;
+                this.init();
+            }
+
+            init() {
+                document.getElementById('activateBtn').addEventListener('click', () => this.activateReactor());
+                document.getElementById('deactivateBtn').addEventListener('click', () => this.deactivateReactor());
+            }
+
+            activateReactor() {
+                if (this.isActive) return;
+                
+                this.isActive = true;
+                this.showStartupSequence();
+                
+                setTimeout(() => {
+                    // Update control panel background
+                    const controlPanel = document.getElementById('controlPanel');
+                    controlPanel.classList.add('reactor-running');
+
+                    // Update reactor core
+                    const reactorCore = document.getElementById('reactorCore');
+                    reactorCore.classList.remove('stopped');
+
+                    // Update status text
+                    const statusText = document.getElementById('reactorStatusText');
+                    statusText.classList.remove('stopped');
+                    statusText.textContent = 'ONLINE';
+
+                    // Update all energy beams
+                    const energyBeams = document.querySelectorAll('.energy-beam');
+                    energyBeams.forEach(beam => beam.classList.remove('stopped'));
+
+                    // Update all energy rings
+                    const energyRings = document.querySelectorAll('.energy-ring');
+                    energyRings.forEach(ring => ring.classList.remove('stopped'));
+
+                    // Update all particles
+                    const particles = document.querySelectorAll('.particle');
+                    particles.forEach(particle => particle.classList.remove('stopped'));
+                }, 2000);
+            }
+
+            deactivateReactor() {
+                if (!this.isActive) return;
+                
+                this.isActive = false;
+                this.showShutdownSequence();
+                
+                setTimeout(() => {
+                    // Update control panel background
+                    const controlPanel = document.getElementById('controlPanel');
+                    controlPanel.classList.remove('reactor-running');
+
+                    // Update reactor core
+                    const reactorCore = document.getElementById('reactorCore');
+                    reactorCore.classList.add('stopped');
+
+                    // Update status text
+                    const statusText = document.getElementById('reactorStatusText');
+                    statusText.classList.add('stopped');
+                    statusText.textContent = 'OFFLINE';
+
+                    // Update all energy beams
+                    const energyBeams = document.querySelectorAll('.energy-beam');
+                    energyBeams.forEach(beam => beam.classList.add('stopped'));
+
+                    // Update all energy rings
+                    const energyRings = document.querySelectorAll('.energy-ring');
+                    energyRings.forEach(ring => ring.classList.add('stopped'));
+
+                    // Update all particles
+                    const particles = document.querySelectorAll('.particle');
+                    particles.forEach(particle => particle.classList.add('stopped'));
+                }, 2000);
+            }
+
+            showStartupSequence() {
+                const statusText = document.getElementById('reactorStatusText');
+                const steps = ['INITIALIZING...', 'WARMING UP...', 'CALIBRATING...', 'ONLINE'];
+                let stepIndex = 0;
+                
+                const interval = setInterval(() => {
+                    if (stepIndex < steps.length) {
+                        statusText.textContent = steps[stepIndex];
+                        stepIndex++;
+                    } else {
+                        clearInterval(interval);
+                    }
+                }, 500);
+            }
+
+            showShutdownSequence() {
+                const statusText = document.getElementById('reactorStatusText');
+                const steps = ['SHUTTING DOWN...', 'COOLING...', 'DISCONNECTING...', 'OFFLINE'];
+                let stepIndex = 0;
+                
+                const interval = setInterval(() => {
+                    if (stepIndex < steps.length) {
+                        statusText.textContent = steps[stepIndex];
+                        stepIndex++;
+                    } else {
+                        clearInterval(interval);
+                    }
+                }, 500);
+            }
+        }
+
+        // Initialize demo when page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            new ReactorDemo();
+        });
+    </script>
+</body>
+</html> 

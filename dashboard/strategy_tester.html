@@ -1,0 +1,2304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QNTI Strategy Tester</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            color: #e2e8f0;
+            min-height: 100vh;
+            overflow-x: hidden;
+            display: flex;
+        }
+
+        /* Sidebar Navigation */
+        .sidebar {
+            width: 280px;
+            background: rgba(15, 23, 42, 0.95);
+            backdrop-filter: blur(10px);
+            border-right: 1px solid #334155;
+            height: 100vh;
+            position: fixed;
+            left: 0;
+            top: 0;
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+        }
+
+        .sidebar-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid #334155;
+        }
+
+        .logo {
+            font-size: 1.3rem;
+            font-weight: bold;
+            background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-align: center;
+        }
+
+        .sidebar-content {
+            flex: 1;
+            padding: 1rem 0;
+        }
+
+        .nav-section {
+            margin-bottom: 2rem;
+        }
+
+        .nav-section-title {
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            padding: 0 1.5rem 0.5rem 1.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .nav-link {
+            color: #94a3b8;
+            text-decoration: none;
+            padding: 0.75rem 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            transition: all 0.2s;
+            border-left: 3px solid transparent;
+        }
+
+        .nav-link:hover {
+            background: rgba(100, 116, 139, 0.1);
+            color: #f1f5f9;
+            border-left-color: #3b82f6;
+        }
+
+        .nav-link.active {
+            background: rgba(59, 130, 246, 0.1);
+            color: #3b82f6;
+            border-left-color: #3b82f6;
+        }
+
+        .nav-icon {
+            font-size: 1.2rem;
+            width: 20px;
+            text-align: center;
+        }
+
+        /* Main Content Area */
+        .main-content {
+            flex: 1;
+            margin-left: 280px;
+            min-height: 100vh;
+            background: transparent;
+        }
+
+        .main-header {
+            background: rgba(15, 23, 42, 0.8);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid #334155;
+            padding: 1rem 2rem;
+            position: sticky;
+            top: 0;
+            z-index: 50;
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .page-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #f1f5f9;
+        }
+
+        .nav-link:hover {
+            background: rgba(59, 130, 246, 0.1);
+            color: #3b82f6;
+        }
+
+        .nav-link.active {
+            background: rgba(59, 130, 246, 0.2);
+            color: #3b82f6;
+        }
+
+        .main-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 1rem;
+            overflow-x: hidden;
+        }
+
+        @media (min-width: 768px) {
+            .main-container {
+                padding: 2rem;
+            }
+        }
+
+        .dashboard-card {
+            background: rgba(30, 41, 59, 0.8);
+            backdrop-filter: blur(10px);
+            border: 1px solid #334155;
+            border-radius: 12px;
+            padding: 1rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            overflow-x: auto;
+        }
+
+        @media (min-width: 768px) {
+            .dashboard-card {
+                padding: 1.5rem;
+            }
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid #475569;
+        }
+
+        .card-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #f1f5f9;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .tab {
+            padding: 0.75rem 1.5rem;
+            background: rgba(51, 65, 85, 0.5);
+            border: 1px solid #475569;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            color: #94a3b8;
+        }
+
+        .tab.active {
+            background: rgba(59, 130, 246, 0.2);
+            border-color: #3b82f6;
+            color: #3b82f6;
+        }
+
+        .tab:hover {
+            background: rgba(59, 130, 246, 0.1);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        @media (min-width: 768px) {
+            .form-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (min-width: 1024px) {
+            .form-grid {
+                grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            }
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .form-label {
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: #cbd5e1;
+        }
+
+        .form-input, .form-select {
+            padding: 0.75rem;
+            background: rgba(51, 65, 85, 0.5);
+            border: 1px solid #475569;
+            border-radius: 6px;
+            color: #e2e8f0;
+            font-size: 0.9rem;
+        }
+
+        .form-input:focus, .form-select:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 6px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 0.9rem;
+        }
+
+        .btn-primary {
+            background: #3b82f6;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #2563eb;
+        }
+
+        .btn-secondary {
+            background: rgba(100, 116, 139, 0.8);
+            color: #e2e8f0;
+        }
+
+        .btn-secondary:hover {
+            background: rgba(100, 116, 139, 1);
+        }
+
+        .btn-danger {
+            background: #ef4444;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #dc2626;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 4px;
+            background: rgba(51, 65, 85, 0.5);
+            border-radius: 2px;
+            overflow: hidden;
+            margin: 1rem 0;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #3b82f6, #8b5cf6);
+            border-radius: 2px;
+            transition: width 0.3s ease;
+            width: 0%;
+        }
+
+        .results-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .metric-card {
+            background: rgba(51, 65, 85, 0.3);
+            border: 1px solid #475569;
+            border-radius: 8px;
+            padding: 1rem;
+            text-align: center;
+        }
+
+        .metric-value {
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+        }
+
+        .metric-label {
+            font-size: 0.8rem;
+            color: #94a3b8;
+        }
+
+        .metric-positive {
+            color: #10b981;
+        }
+
+        .metric-negative {
+            color: #ef4444;
+        }
+
+        .metric-neutral {
+            color: #6b7280;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 400px;
+            margin: 1rem 0;
+        }
+
+        .results-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+            min-width: 800px;
+        }
+
+        .table-container {
+            overflow-x: auto;
+            margin: 1rem 0;
+            border: 1px solid #475569;
+            border-radius: 8px;
+        }
+
+        .results-table th,
+        .results-table td {
+            padding: 0.75rem;
+            text-align: left;
+            border-bottom: 1px solid #475569;
+        }
+
+        .results-table th {
+            background: rgba(51, 65, 85, 0.5);
+            font-weight: 600;
+            color: #cbd5e1;
+        }
+
+        .results-table tr:hover {
+            background: rgba(51, 65, 85, 0.3);
+        }
+
+        .status-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.25rem 0.75rem;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+
+        .status-running {
+            background: rgba(59, 130, 246, 0.2);
+            color: #3b82f6;
+        }
+
+        .status-completed {
+            background: rgba(16, 185, 129, 0.2);
+            color: #10b981;
+        }
+
+        .status-failed {
+            background: rgba(239, 68, 68, 0.2);
+            color: #ef4444;
+        }
+
+        .parameters-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+            max-width: 100%;
+        }
+
+        @media (min-width: 768px) {
+            .parameters-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (min-width: 1200px) {
+            .parameters-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+
+        .parameter-card {
+            background: rgba(51, 65, 85, 0.3);
+            border: 1px solid #475569;
+            border-radius: 8px;
+            padding: 1rem;
+            min-width: 0;
+            max-width: 100%;
+            overflow-x: auto;
+        }
+
+        .parameter-name {
+            font-weight: 600;
+            color: #cbd5e1;
+            margin-bottom: 0.5rem;
+            font-size: 0.9rem;
+        }
+
+        .parameter-controls {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.5rem;
+            align-items: center;
+        }
+
+        .parameter-controls.single-input {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .parameter-input {
+            padding: 0.4rem 0.6rem;
+            background: rgba(51, 65, 85, 0.5);
+            border: 1px solid #475569;
+            border-radius: 4px;
+            color: #e2e8f0;
+            font-size: 0.8rem;
+            width: 100%;
+        }
+
+        .parameter-input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.3rem;
+        }
+
+        .parameter-input-label {
+            font-size: 0.7rem;
+            color: #94a3b8;
+            margin-bottom: 0.2rem;
+        }
+
+        /* Compact optimization layout */
+        .optimization-parameters-container {
+            background: rgba(51, 65, 85, 0.2);
+            border: 1px solid #475569;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .optimization-param-row {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+            padding: 0.5rem;
+            border-radius: 6px;
+            transition: background-color 0.2s;
+        }
+
+        .optimization-param-row:hover {
+            background: rgba(51, 65, 85, 0.3);
+        }
+
+        .optimization-param-name {
+            font-weight: 600;
+            color: #cbd5e1;
+            font-size: 0.9rem;
+            min-width: 120px;
+            text-align: right;
+            text-transform: capitalize;
+        }
+
+        .optimization-param-inputs {
+            display: flex;
+            gap: 0.75rem;
+            flex: 1;
+            justify-content: flex-start;
+        }
+
+        .optimization-param-input {
+            padding: 0.4rem 0.6rem;
+            background: rgba(51, 65, 85, 0.5);
+            border: 1px solid #475569;
+            border-radius: 4px;
+            color: #e2e8f0;
+            font-size: 0.8rem;
+            width: 80px;
+            text-align: center;
+            transition: all 0.2s;
+        }
+
+        .optimization-param-input:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+        }
+
+        .optimization-param-input.current {
+            background: rgba(59, 130, 246, 0.2);
+            border-color: #3b82f6;
+            font-weight: 600;
+        }
+
+        /* Optimization form layout */
+        .optimization-form-container {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        @media (min-width: 768px) {
+            .optimization-form-container {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (min-width: 1024px) {
+            .optimization-form-container {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+
+        .optimization-form-section {
+            background: rgba(51, 65, 85, 0.2);
+            border: 1px solid #475569;
+            border-radius: 8px;
+            padding: 1.5rem;
+            min-width: 0;
+            max-width: 100%;
+        }
+
+        .section-title {
+            font-size: 1rem;
+            font-weight: 600;
+            color: #cbd5e1;
+            margin: 0 0 1rem 0;
+            border-bottom: 1px solid #475569;
+            padding-bottom: 0.5rem;
+        }
+
+        .form-grid-compact {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1rem;
+        }
+
+        @media (min-width: 768px) {
+            .form-grid-compact {
+                grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            }
+        }
+
+        .loading {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 2rem;
+            color: #94a3b8;
+        }
+
+        .spinner {
+            width: 20px;
+            height: 20px;
+            border: 2px solid #475569;
+            border-top: 2px solid #3b82f6;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 0.5rem;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .alert {
+            padding: 1rem;
+            border-radius: 6px;
+            margin-bottom: 1rem;
+            display: none;
+        }
+
+        .alert-success {
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid #10b981;
+            color: #10b981;
+        }
+
+        .alert-error {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid #ef4444;
+            color: #ef4444;
+        }
+
+        .alert-info {
+            background: rgba(59, 130, 246, 0.1);
+            border: 1px solid #3b82f6;
+            color: #3b82f6;
+        }
+
+        /* Upload Area Styles */
+        .upload-area {
+            border: 2px dashed #475569;
+            border-radius: 8px;
+            padding: 2rem;
+            text-align: center;
+            transition: all 0.3s ease;
+            background: rgba(51, 65, 85, 0.3);
+        }
+
+        .upload-area:hover {
+            border-color: #3b82f6;
+            background: rgba(59, 130, 246, 0.1);
+        }
+
+        .upload-area.drag-over {
+            border-color: #3b82f6;
+            background: rgba(59, 130, 246, 0.2);
+        }
+
+        .upload-content {
+            color: #94a3b8;
+        }
+
+        .upload-progress {
+            margin-top: 1rem;
+        }
+
+        .data-file-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem;
+            background: rgba(51, 65, 85, 0.3);
+            border: 1px solid #475569;
+            border-radius: 6px;
+            margin-bottom: 0.5rem;
+        }
+
+        .data-file-info {
+            flex: 1;
+        }
+
+        .data-file-name {
+            font-weight: 500;
+            color: #cbd5e1;
+        }
+
+        .data-file-details {
+            font-size: 0.8rem;
+            color: #94a3b8;
+        }
+
+        .data-file-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .btn-small {
+            padding: 0.25rem 0.5rem;
+            font-size: 0.8rem;
+            border-radius: 4px;
+        }
+
+        .upload-result-item {
+            padding: 0.75rem;
+            border-radius: 6px;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .upload-result-success {
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid #10b981;
+            color: #10b981;
+        }
+
+        .upload-result-error {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid #ef4444;
+            color: #ef4444;
+        }
+
+        /* Additional responsive improvements */
+        @media (max-width: 768px) {
+            .main-container {
+                padding: 0.5rem;
+            }
+            
+            .dashboard-card {
+                padding: 0.75rem;
+                margin-bottom: 1rem;
+            }
+            
+            .tabs {
+                flex-wrap: wrap;
+                gap: 0.5rem;
+            }
+            
+            .tab {
+                padding: 0.5rem 1rem;
+                font-size: 0.8rem;
+            }
+            
+            .nav-menu {
+                gap: 0.5rem;
+            }
+            
+            .header-content {
+                flex-wrap: wrap;
+                gap: 1rem;
+            }
+            
+            .card-header {
+                flex-wrap: wrap;
+                gap: 0.5rem;
+            }
+            
+            .results-table th,
+            .results-table td {
+                padding: 0.5rem 0.25rem;
+                font-size: 0.8rem;
+            }
+        }
+
+        /* Additional layout fixes for content overflow prevention */
+        .optimization-form-container {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+            max-width: 100%;
+            overflow-x: hidden;
+        }
+
+        @media (min-width: 768px) {
+            .optimization-form-container {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (min-width: 1024px) {
+            .optimization-form-container {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+
+        .optimization-form-section {
+            background: rgba(51, 65, 85, 0.2);
+            border: 1px solid #475569;
+            border-radius: 8px;
+            padding: 1.5rem;
+            min-width: 0;
+            max-width: 100%;
+            overflow-x: hidden;
+        }
+
+        .section-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #cbd5e1;
+            margin-bottom: 1rem;
+            border-bottom: 1px solid #475569;
+            padding-bottom: 0.5rem;
+        }
+
+        .form-grid-compact {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1rem;
+        }
+
+        @media (min-width: 640px) {
+            .form-grid-compact {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        /* Ensure all containers respect max width */
+        .tab-content {
+            max-width: 100%;
+            overflow-x: hidden;
+        }
+
+        .results-grid {
+            max-width: 100%;
+            overflow-x: hidden;
+        }
+
+        .metric-card {
+            min-width: 0;
+            overflow-x: hidden;
+        }
+
+        /* Fix chart container overflow */
+        .chart-container {
+            position: relative;
+            height: 400px;
+            margin: 1rem 0;
+            max-width: 100%;
+            overflow: hidden;
+        }
+
+        /* Ensure buttons don't overflow */
+        .btn {
+            min-width: 0;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        @media (max-width: 480px) {
+            .btn {
+                padding: 0.5rem 1rem;
+                font-size: 0.8rem;
+            }
+        }
+
+        /* Upload section responsive improvements */
+        .upload-section {
+            max-width: 100%;
+            overflow-x: hidden;
+        }
+
+        .upload-results-container {
+            max-width: 100%;
+            overflow-x: auto;
+            word-wrap: break-word;
+        }
+
+        /* Parameters grid improvements */
+        .parameters-grid {
+            overflow-x: hidden;
+        }
+
+        .parameter-card {
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+        }
+
+        .parameter-name {
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+        }
+
+        /* Table responsive improvements */
+        .table-container {
+            max-width: 100%;
+            overflow-x: auto;
+            overflow-y: hidden;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .results-table {
+            white-space: nowrap;
+        }
+
+        /* Progress bar container fix */
+        .progress-bar {
+            max-width: 100%;
+            overflow: hidden;
+        }
+
+        /* Ensure all text content wraps properly */
+        .card-title,
+        .form-label,
+        .metric-label {
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+        }
+    </style>
+</head>
+<body>
+    <!-- Sidebar Navigation -->
+    <nav class="sidebar">
+        <div class="sidebar-header">
+            <div class="logo">Quantum Nexus Trading Intelligence</div>
+        </div>
+        
+        <div class="sidebar-content">
+            <div class="nav-section">
+                <div class="nav-section-title">Main</div>
+                <a href="main_dashboard.html" class="nav-link">
+                    <span class="nav-icon">📊</span>
+                    <span>Dashboard</span>
+                </a>
+                <a href="vision_trading_charts.html" class="nav-link">
+                    <span class="nav-icon">👁️</span>
+                    <span>Vision Trading</span>
+                </a>
+            </div>
+
+            <div class="nav-section">
+                <div class="nav-section-title">Trading</div>
+                <a href="trading_center.html" class="nav-link">
+                    <span class="nav-icon">📈</span>
+                    <span>Trading Center</span>
+                </a>
+                <a href="market_intelligence_board.html" class="nav-link">
+                    <span class="nav-icon">🧠</span>
+                    <span>Intelligence</span>
+                </a>
+                <a href="forex_advisor_chat.html" class="nav-link">
+                    <span class="nav-icon">💬</span>
+                    <span>Advisor Chat</span>
+                </a>
+                <a href="ea_management.html" class="nav-link">
+                    <span class="nav-icon">🤖</span>
+                    <span>EA Manager</span>
+                </a>
+                <a href="unified_automation.html" class="nav-link">
+                    <span class="nav-icon">🎯</span>
+                    <span>Unified Automation</span>
+                </a>
+            </div>
+
+            <div class="nav-section">
+                <div class="nav-section-title">Analysis</div>
+                <a href="#" class="nav-link active">
+                    <span class="nav-icon">🧪</span>
+                    <span>Strategy Tester</span>
+                </a>
+                <a href="analytics_reports.html" class="nav-link">
+                    <span class="nav-icon">📊</span>
+                    <span>Analytics</span>
+                </a>
+                <a href="smc_analysis.html" class="nav-link">
+                    <span class="nav-icon">🎯</span>
+                    <span>Smart Money Concepts</span>
+                </a>
+            </div>
+
+            <div class="nav-section">
+                <div class="nav-section-title">Tools</div>
+                
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content Area -->
+    <main class="main-content">
+        <div class="main-header">
+            <div class="header-content">
+                <div class="page-title">Strategy Tester</div>
+            </div>
+        </div>
+
+        <!-- Page Content -->
+        <div class="page-content">
+
+    <div class="main-container">
+        <div class="alert alert-success" id="success-alert"></div>
+        <div class="alert alert-error" id="error-alert"></div>
+        <div class="alert alert-info" id="info-alert"></div>
+
+        <div class="dashboard-card">
+            <div class="card-header">
+                <h2 class="card-title">Strategy Tester & Optimizer</h2>
+            </div>
+
+            <div class="tabs">
+                <div class="tab active" onclick="switchTab('backtest')">📈 Backtest</div>
+                <div class="tab" onclick="switchTab('optimization')">🔧 Optimization</div>
+                <div class="tab" onclick="switchTab('results')">📊 Results</div>
+            </div>
+
+            <!-- Backtest Tab -->
+            <div id="backtest-tab" class="tab-content active">
+                <!-- Data Upload Section -->
+                <div class="dashboard-card" style="margin-bottom: 2rem;">
+                    <div class="card-header">
+                        <h3 class="card-title">📊 Historical Data Upload</h3>
+                        <button class="btn btn-secondary" onclick="refreshAvailableData()">🔄 Refresh</button>
+                    </div>
+                    
+                    <div class="upload-area" id="upload-area">
+                        <div class="upload-content">
+                            <div style="text-align: center; padding: 2rem;">
+                                <div style="font-size: 3rem; margin-bottom: 1rem;">📁</div>
+                                <p>Drag and drop JSON files here</p>
+                                <p style="color: #94a3b8; margin: 0.5rem 0;">or <a href="#" style="color: #3b82f6;" onclick="document.getElementById('file-input').click()">browse files</a></p>
+                                <small style="color: #64748b;">Max file size: 50MB • Only .json files from MT5 export</small>
+                            </div>
+                            <input type="file" id="file-input" accept=".json" multiple style="display: none;">
+                        </div>
+                    </div>
+                    
+                    <div class="upload-progress" id="upload-progress" style="display: none;">
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="upload-progress-fill"></div>
+                        </div>
+                        <small style="color: #94a3b8;">Uploading...</small>
+                    </div>
+                    
+                    <div id="upload-results" style="margin-top: 1rem;">
+                        <!-- Upload results will appear here -->
+                    </div>
+                    
+                    <div id="available-data" style="margin-top: 1rem;">
+                        <h4 style="margin-bottom: 1rem; color: #cbd5e1;">Available Data Files:</h4>
+                        <div id="available-data-list">
+                            <!-- Available data will be populated here -->
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label class="form-label">EA Name</label>
+                        <select class="form-select" id="backtest-ea-select">
+                            <option value="">Select EA...</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Symbol</label>
+                        <select class="form-select" id="backtest-symbol">
+                            <option value="">Select Symbol...</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Timeframe</label>
+                        <select class="form-select" id="backtest-timeframe">
+                            <option value="">Select Timeframe...</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Start Date</label>
+                        <input type="date" class="form-input" id="backtest-start-date">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">End Date</label>
+                        <input type="date" class="form-input" id="backtest-end-date">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Initial Balance</label>
+                        <input type="number" class="form-input" id="backtest-balance" value="10000" min="1000" step="1000">
+                    </div>
+                </div>
+
+                <div class="parameters-grid" id="backtest-parameters">
+                    <!-- Parameters will be loaded dynamically -->
+                </div>
+
+                <div style="text-align: center; margin-top: 1.5rem;">
+                    <button class="btn btn-primary" onclick="runBacktest()">🚀 Run Backtest</button>
+                </div>
+
+                <div class="progress-bar" id="backtest-progress" style="display: none;">
+                    <div class="progress-fill" id="backtest-progress-fill"></div>
+                </div>
+            </div>
+
+            <!-- Optimization Tab -->
+            <div id="optimization-tab" class="tab-content">
+                <div class="optimization-form-container">
+                    <div class="optimization-form-section">
+                        <h3 class="section-title">Strategy Configuration</h3>
+                        <div class="form-grid-compact">
+                            <div class="form-group">
+                                <label class="form-label">EA Name</label>
+                                <select class="form-select" id="optimization-ea-select">
+                                    <option value="">Select EA...</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Symbol</label>
+                                <select class="form-select" id="optimization-symbol">
+                                    <option value="EURUSD">EUR/USD</option>
+                                    <option value="GBPUSD">GBP/USD</option>
+                                    <option value="USDJPY">USD/JPY</option>
+                                    <option value="USDCHF">USD/CHF</option>
+                                    <option value="AUDUSD">AUD/USD</option>
+                                    <option value="USDCAD">USD/CAD</option>
+                                    <option value="NZDUSD">NZD/USD</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Timeframe</label>
+                                <select class="form-select" id="optimization-timeframe">
+                                    <option value="M1">1 Minute</option>
+                                    <option value="M5">5 Minutes</option>
+                                    <option value="M15">15 Minutes</option>
+                                    <option value="M30">30 Minutes</option>
+                                    <option value="H1" selected>1 Hour</option>
+                                    <option value="H4">4 Hours</option>
+                                    <option value="D1">Daily</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="optimization-form-section">
+                        <h3 class="section-title">Date Range</h3>
+                        <div class="form-grid-compact">
+                            <div class="form-group">
+                                <label class="form-label">Start Date</label>
+                                <input type="date" class="form-input" id="optimization-start-date">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">End Date</label>
+                                <input type="date" class="form-input" id="optimization-end-date">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="optimization-form-section">
+                        <h3 class="section-title">Optimization Settings</h3>
+                        <div class="form-grid-compact">
+                            <div class="form-group">
+                                <label class="form-label">Optimization Type</label>
+                                <select class="form-select" id="optimization-type">
+                                    <option value="genetic_algorithm">Genetic Algorithm</option>
+                                    <option value="grid_search">Grid Search</option>
+                                    <option value="walk_forward">Walk Forward</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Fitness Function</label>
+                                <select class="form-select" id="optimization-fitness">
+                                    <option value="profit_factor">Profit Factor</option>
+                                    <option value="sharpe_ratio">Sharpe Ratio</option>
+                                    <option value="total_return">Total Return</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Max Iterations</label>
+                                <input type="number" class="form-input" id="optimization-iterations" value="100" min="10" max="1000">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="optimization-form-section">
+                    <h3 class="section-title">Parameter Optimization Ranges</h3>
+                    <div class="optimization-parameters-container" id="optimization-parameters">
+                        <!-- Parameters will be loaded dynamically -->
+                    </div>
+                </div>
+
+                <div style="text-align: center; margin-top: 1.5rem;">
+                    <button class="btn btn-primary" onclick="runOptimization()">🔧 Run Optimization</button>
+                </div>
+
+                <div class="progress-bar" id="optimization-progress" style="display: none;">
+                    <div class="progress-fill" id="optimization-progress-fill"></div>
+                </div>
+            </div>
+
+            <!-- Results Tab -->
+            <div id="results-tab" class="tab-content">
+                <div class="results-grid" id="results-metrics">
+                    <!-- Results metrics will be displayed here -->
+                </div>
+
+                <div class="chart-container">
+                    <canvas id="equity-chart"></canvas>
+                </div>
+
+                <div class="table-container">
+                    <table class="results-table" id="results-table">
+                        <thead>
+                            <tr>
+                                <th>Test ID</th>
+                                <th>EA Name</th>
+                                <th>Symbol</th>
+                                <th>Timeframe</th>
+                                <th>Total Trades</th>
+                                <th>Win Rate</th>
+                                <th>Profit Factor</th>
+                                <th>Max Drawdown</th>
+                                <th>Created</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Results will be loaded dynamically -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentTab = 'backtest';
+        let equityChart = null;
+        let currentEAProfiles = [];
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeDates();
+            loadEAProfiles();
+            loadResults();
+        });
+
+        function initializeDates() {
+            const endDate = new Date();
+            const startDate = new Date();
+            startDate.setMonth(startDate.getMonth() - 3);
+
+            document.getElementById('backtest-start-date').value = startDate.toISOString().split('T')[0];
+            document.getElementById('backtest-end-date').value = endDate.toISOString().split('T')[0];
+            document.getElementById('optimization-start-date').value = startDate.toISOString().split('T')[0];
+            document.getElementById('optimization-end-date').value = endDate.toISOString().split('T')[0];
+        }
+
+        function switchTab(tabName) {
+            // Hide all tabs
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+
+            // Show selected tab
+            document.getElementById(tabName + '-tab').classList.add('active');
+            event.target.classList.add('active');
+            currentTab = tabName;
+
+            if (tabName === 'results') {
+                loadResults();
+            }
+        }
+
+        async function loadEAProfiles() {
+            try {
+                const response = await fetch('/api/ea-profiles');
+                const profiles = await response.json();
+                currentEAProfiles = profiles;
+
+                const backtestSelect = document.getElementById('backtest-ea-select');
+                const optimizationSelect = document.getElementById('optimization-ea-select');
+
+                backtestSelect.innerHTML = '<option value="">Select EA...</option>';
+                optimizationSelect.innerHTML = '<option value="">Select EA...</option>';
+
+                profiles.forEach(profile => {
+                    const option = '<option value="' + profile.name + '">' + profile.name + '</option>';
+                    backtestSelect.innerHTML += option;
+                    optimizationSelect.innerHTML += option;
+                });
+
+                // Load parameters for first EA
+                if (profiles.length > 0) {
+                    loadEAParameters(profiles[0]);
+                }
+
+            } catch (error) {
+                console.error('Error loading EA profiles:', error);
+                showAlert('error', 'Failed to load EA profiles');
+            }
+        }
+
+        function loadEAParameters(profile) {
+            const backtestContainer = document.getElementById('backtest-parameters');
+            const optimizationContainer = document.getElementById('optimization-parameters');
+
+            backtestContainer.innerHTML = '';
+            optimizationContainer.innerHTML = '';
+
+            // Default parameters for testing
+            const defaultParameters = [
+                { name: 'lot_size', type: 'float', value: 0.01, min: 0.01, max: 1.0, step: 0.01 },
+                { name: 'stop_loss_pct', type: 'float', value: 0.02, min: 0.005, max: 0.1, step: 0.005 },
+                { name: 'take_profit_pct', type: 'float', value: 0.04, min: 0.01, max: 0.2, step: 0.01 },
+                { name: 'ma_short', type: 'int', value: 20, min: 5, max: 50, step: 5 },
+                { name: 'ma_long', type: 'int', value: 50, min: 20, max: 200, step: 10 }
+            ];
+
+            defaultParameters.forEach(param => {
+                const backtestCard = createParameterCard(param, 'backtest');
+                const optimizationCard = createParameterCard(param, 'optimization');
+                backtestContainer.appendChild(backtestCard);
+                optimizationContainer.appendChild(optimizationCard);
+            });
+        }
+
+        function createParameterCard(param, prefix) {
+            const card = document.createElement('div');
+            
+            if (prefix === 'optimization') {
+                // Use compact row layout for optimization parameters
+                card.className = 'optimization-param-row';
+                card.innerHTML = 
+                    '<div class="optimization-param-name">' + param.name.replace('_', ' ') + '</div>' +
+                    '<div class="optimization-param-inputs">' +
+                        '<div class="parameter-input-group">' +
+                            '<div class="parameter-input-label">Current</div>' +
+                            '<input type="number" class="optimization-param-input current" ' +
+                                   'id="' + prefix + '-' + param.name + '" ' +
+                                   'value="' + param.value + '" ' +
+                                   'min="' + param.min + '" ' +
+                                   'max="' + param.max + '" ' +
+                                   'step="' + param.step + '">' +
+                        '</div>' +
+                        '<div class="parameter-input-group">' +
+                            '<div class="parameter-input-label">Min</div>' +
+                            '<input type="number" class="optimization-param-input" ' +
+                                   'id="' + prefix + '-' + param.name + '-min" ' +
+                                   'value="' + param.min + '" ' +
+                                   'placeholder="Min">' +
+                        '</div>' +
+                        '<div class="parameter-input-group">' +
+                            '<div class="parameter-input-label">Max</div>' +
+                            '<input type="number" class="optimization-param-input" ' +
+                                   'id="' + prefix + '-' + param.name + '-max" ' +
+                                   'value="' + param.max + '" ' +
+                                   'placeholder="Max">' +
+                        '</div>' +
+                        '<div class="parameter-input-group">' +
+                            '<div class="parameter-input-label">Step</div>' +
+                            '<input type="number" class="optimization-param-input" ' +
+                                   'id="' + prefix + '-' + param.name + '-step" ' +
+                                   'value="' + param.step + '" ' +
+                                   'placeholder="Step">' +
+                        '</div>' +
+                    '</div>';
+            } else {
+                // Use card layout for backtest parameters
+                card.className = 'parameter-card';
+                card.innerHTML = 
+                    '<div class="parameter-name">' + param.name + '</div>' +
+                    '<div class="parameter-controls single-input">' +
+                        '<input type="number" class="parameter-input" ' +
+                               'id="' + prefix + '-' + param.name + '" ' +
+                               'value="' + param.value + '" ' +
+                               'min="' + param.min + '" ' +
+                               'max="' + param.max + '" ' +
+                               'step="' + param.step + '">' +
+                    '</div>';
+            }
+
+            return card;
+        }
+
+        // Handle EA selection change
+        document.addEventListener('change', function(e) {
+            if (e.target.id === 'backtest-ea-select' || e.target.id === 'optimization-ea-select') {
+                const selectedEA = currentEAProfiles.find(profile => profile.name === e.target.value);
+                if (selectedEA) {
+                    loadEAParameters(selectedEA);
+                }
+            }
+        });
+
+        async function runBacktest() {
+            const eaName = document.getElementById('backtest-ea-select').value;
+            const symbol = document.getElementById('backtest-symbol').value;
+            const timeframe = document.getElementById('backtest-timeframe').value;
+            const startDate = document.getElementById('backtest-start-date').value;
+            const endDate = document.getElementById('backtest-end-date').value;
+            const balance = document.getElementById('backtest-balance').value;
+
+            if (!eaName) {
+                showAlert('error', 'Please select an EA');
+                return;
+            }
+
+            const parameters = collectParameters('backtest');
+
+            const data = {
+                ea_name: eaName,
+                symbol: symbol,
+                timeframe: timeframe,
+                start_date: startDate,
+                end_date: endDate,
+                initial_balance: parseFloat(balance),
+                parameters: parameters
+            };
+
+            try {
+                showProgress('backtest', 0);
+                showAlert('info', 'Starting backtest...');
+
+                const response = await fetch('/api/strategy-tester/backtest', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                if (!response.ok) {
+                    throw new Error('Backtest failed');
+                }
+
+                const result = await response.json();
+                
+                hideProgress('backtest');
+                showAlert('success', 'Backtest completed successfully!');
+                
+                // Switch to results tab and display results
+                switchTab('results');
+                displayBacktestResult(result);
+
+            } catch (error) {
+                hideProgress('backtest');
+                showAlert('error', 'Backtest failed: ' + error.message);
+            }
+        }
+
+        async function runOptimization() {
+            const eaName = document.getElementById('optimization-ea-select').value;
+            const symbol = document.getElementById('optimization-symbol').value;
+            const timeframe = document.getElementById('optimization-timeframe').value;
+            const startDate = document.getElementById('optimization-start-date').value;
+            const endDate = document.getElementById('optimization-end-date').value;
+            const optimizationType = document.getElementById('optimization-type').value;
+            const fitnessFunction = document.getElementById('optimization-fitness').value;
+            const maxIterations = document.getElementById('optimization-iterations').value;
+
+            if (!eaName) {
+                showAlert('error', 'Please select an EA');
+                return;
+            }
+
+            const parameters = collectOptimizationParameters();
+
+            const data = {
+                ea_name: eaName,
+                symbol: symbol,
+                timeframe: timeframe,
+                start_date: startDate,
+                end_date: endDate,
+                optimization_type: optimizationType,
+                fitness_function: fitnessFunction,
+                max_iterations: parseInt(maxIterations),
+                parameters: parameters
+            };
+
+            try {
+                showProgress('optimization', 0);
+                showAlert('info', 'Starting optimization...');
+
+                const response = await fetch('/api/strategy-tester/optimize', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                if (!response.ok) {
+                    throw new Error('Optimization failed');
+                }
+
+                const result = await response.json();
+                
+                hideProgress('optimization');
+                showAlert('success', 'Optimization completed successfully!');
+                
+                // Switch to results tab and display results
+                switchTab('results');
+                displayOptimizationResult(result);
+
+            } catch (error) {
+                hideProgress('optimization');
+                showAlert('error', 'Optimization failed: ' + error.message);
+            }
+        }
+
+        function collectParameters(prefix) {
+            const parameters = {};
+            document.querySelectorAll('#' + prefix + '-parameters .parameter-input').forEach(input => {
+                const paramName = input.id.replace(prefix + '-', '');
+                parameters[paramName] = parseFloat(input.value);
+            });
+            return parameters;
+        }
+
+        function collectOptimizationParameters() {
+            const parameters = [];
+            
+            // Define parameter types - critical for proper optimization
+            const parameterTypes = {
+                'lot_size': 'float',
+                'stop_loss_pct': 'float', 
+                'take_profit_pct': 'float',
+                'ma_short': 'int',
+                'ma_long': 'int',
+                'bb_period': 'int',
+                'bb_std': 'float',
+                'breakout_period': 'int',
+                'rsi_period': 'int',
+                'rsi_overbought': 'int',
+                'rsi_oversold': 'int'
+            };
+            
+            // Get all parameter names from the optimization form
+            const paramNames = ['lot_size', 'stop_loss_pct', 'take_profit_pct', 'ma_short', 'ma_long'];
+            
+            paramNames.forEach(paramName => {
+                const valueInput = document.getElementById('optimization-' + paramName);
+                const minInput = document.getElementById('optimization-' + paramName + '-min');
+                const maxInput = document.getElementById('optimization-' + paramName + '-max');
+                const stepInput = document.getElementById('optimization-' + paramName + '-step');
+
+                if (valueInput && minInput && maxInput && stepInput) {
+                    const paramType = parameterTypes[paramName] || 'float';
+                    
+                    parameters.push({
+                        name: paramName,
+                        min_value: parseFloat(minInput.value),
+                        max_value: parseFloat(maxInput.value),
+                        step: parseFloat(stepInput.value),
+                        param_type: paramType
+                    });
+                }
+            });
+            
+            console.log('📋 Collected optimization parameters:', parameters);
+            return parameters;
+        }
+
+        function showProgress(type, percentage) {
+            const progressBar = document.getElementById(type + '-progress');
+            const progressFill = document.getElementById(type + '-progress-fill');
+            progressBar.style.display = 'block';
+            progressFill.style.width = percentage + '%';
+        }
+
+        function hideProgress(type) {
+            const progressBar = document.getElementById(type + '-progress');
+            progressBar.style.display = 'none';
+        }
+
+        function showAlert(type, message) {
+            const alert = document.getElementById(type + '-alert');
+            alert.textContent = message;
+            alert.style.display = 'block';
+            
+            setTimeout(() => {
+                alert.style.display = 'none';
+            }, 5000);
+        }
+
+        function displayBacktestResult(result) {
+            const metricsContainer = document.getElementById('results-metrics');
+            
+            const metrics = [
+                { label: 'Total Trades', value: result.total_trades, type: 'neutral' },
+                { label: 'Win Rate', value: result.win_rate.toFixed(1) + '%', type: result.win_rate > 50 ? 'positive' : 'negative' },
+                { label: 'Profit Factor', value: result.profit_factor.toFixed(2), type: result.profit_factor > 1 ? 'positive' : 'negative' },
+                { label: 'Max Drawdown', value: result.max_drawdown_percent.toFixed(2) + '%', type: 'negative' },
+                { label: 'Final Balance', value: '$' + result.final_balance.toFixed(2), type: result.final_balance > result.initial_balance ? 'positive' : 'negative' },
+                { label: 'Sharpe Ratio', value: result.sharpe_ratio.toFixed(2), type: result.sharpe_ratio > 0 ? 'positive' : 'negative' }
+            ];
+
+            metricsContainer.innerHTML = metrics.map(metric => 
+                '<div class="metric-card">' +
+                    '<div class="metric-value metric-' + metric.type + '">' + metric.value + '</div>' +
+                    '<div class="metric-label">' + metric.label + '</div>' +
+                '</div>'
+            ).join('');
+
+            // Update equity chart
+            if (result.equity_curve) {
+                updateEquityChart(result.equity_curve);
+            }
+        }
+
+        function displayOptimizationResult(result) {
+            const metricsContainer = document.getElementById('results-metrics');
+            
+            const metrics = [
+                { label: 'Best Fitness', value: result.best_fitness.toFixed(3), type: 'positive' },
+                { label: 'Total Tests', value: result.total_tests, type: 'neutral' },
+                { label: 'Execution Time', value: result.execution_time.toFixed(1) + 's', type: 'neutral' },
+                { label: 'Optimization Type', value: result.optimization_type, type: 'neutral' }
+            ];
+
+            metricsContainer.innerHTML = metrics.map(metric => 
+                '<div class="metric-card">' +
+                    '<div class="metric-value metric-' + metric.type + '">' + metric.value + '</div>' +
+                    '<div class="metric-label">' + metric.label + '</div>' +
+                '</div>'
+            ).join('');
+
+            // Display best parameters
+            const parametersHtml = Object.entries(result.best_parameters).map(([key, value]) => 
+                '<div class="parameter-card">' +
+                    '<div class="parameter-name">' + key + '</div>' +
+                    '<div style="color: #10b981; font-weight: 600;">' + value + '</div>' +
+                '</div>'
+            ).join('');
+
+            metricsContainer.innerHTML += 
+                '<div style="grid-column: 1 / -1; margin-top: 1rem;">' +
+                    '<h3 style="margin-bottom: 1rem;">Best Parameters</h3>' +
+                    '<div class="parameters-grid">' + parametersHtml + '</div>' +
+                '</div>';
+        }
+
+        function updateEquityChart(equityData) {
+            const ctx = document.getElementById('equity-chart').getContext('2d');
+            
+            if (equityChart) {
+                equityChart.destroy();
+            }
+
+            const labels = equityData.map(point => new Date(point.timestamp).toLocaleDateString());
+            const data = equityData.map(point => point.equity);
+
+            equityChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Equity',
+                        data: data,
+                        borderColor: '#3b82f6',
+                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                        tension: 0.1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Equity Curve',
+                            color: '#e2e8f0'
+                        },
+                        legend: {
+                            labels: {
+                                color: '#e2e8f0'
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            ticks: {
+                                color: '#94a3b8'
+                            },
+                            grid: {
+                                color: 'rgba(148, 163, 184, 0.1)'
+                            }
+                        },
+                        y: {
+                            ticks: {
+                                color: '#94a3b8'
+                            },
+                            grid: {
+                                color: 'rgba(148, 163, 184, 0.1)'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        async function loadResults() {
+            try {
+                const response = await fetch('/api/strategy-tester/results');
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const results = await response.json();
+                
+                const tbody = document.querySelector('#results-table tbody');
+                if (!tbody) {
+                    console.warn('Results table not found');
+                    return;
+                }
+                
+                if (!results || results.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="10" style="text-align: center; color: #94a3b8;">No results available</td></tr>';
+                    return;
+                }
+                
+                tbody.innerHTML = results.map(result => 
+                    '<tr>' +
+                        '<td>' + (result.test_id ? result.test_id.substring(0, 8) + '...' : 'N/A') + '</td>' +
+                        '<td>' + (result.ea_name || 'N/A') + '</td>' +
+                        '<td>' + (result.symbol || 'N/A') + '</td>' +
+                        '<td>' + (result.timeframe || 'N/A') + '</td>' +
+                        '<td>' + (result.total_trades || 0) + '</td>' +
+                        '<td class="metric-' + (result.win_rate > 50 ? 'positive' : 'negative') + '">' + (result.win_rate ? result.win_rate.toFixed(1) : '0.0') + '%</td>' +
+                        '<td class="metric-' + (result.profit_factor > 1 ? 'positive' : 'negative') + '">' + (result.profit_factor ? result.profit_factor.toFixed(2) : '0.00') + '</td>' +
+                        '<td class="metric-negative">' + (result.max_drawdown_percent ? result.max_drawdown_percent.toFixed(2) : '0.00') + '%</td>' +
+                        '<td>' + (result.created_at ? new Date(result.created_at).toLocaleString() : 'N/A') + '</td>' +
+                        '<td>' +
+                            '<button class="btn btn-secondary" onclick="viewResult(\'' + result.test_id + '\')">View</button>' +
+                            '<button class="btn btn-danger" onclick="deleteResult(\'' + result.test_id + '\')">Delete</button>' +
+                        '</td>' +
+                    '</tr>'
+                ).join('');
+
+            } catch (error) {
+                console.error('Error loading results:', error);
+                const tbody = document.querySelector('#results-table tbody');
+                if (tbody) {
+                    tbody.innerHTML = '<tr><td colspan="10" style="text-align: center; color: #ef4444;">Error loading results: ' + error.message + '</td></tr>';
+                }
+            }
+        }
+
+        async function viewResult(testId) {
+            try {
+                const response = await fetch('/api/strategy-tester/results/' + testId);
+                const result = await response.json();
+                
+                displayBacktestResult(result);
+                
+            } catch (error) {
+                console.error('Error loading result details:', error);
+                showAlert('error', 'Failed to load result details');
+            }
+        }
+
+        async function deleteResult(testId) {
+            if (!confirm('Are you sure you want to delete this result?')) {
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/strategy-tester/results/' + testId, {
+                    method: 'DELETE'
+                });
+
+                if (response.ok) {
+                    showAlert('success', 'Result deleted successfully');
+                    loadResults();
+                } else {
+                    throw new Error('Failed to delete result');
+                }
+
+            } catch (error) {
+                console.error('Error deleting result:', error);
+                showAlert('error', 'Failed to delete result');
+            }
+        }
+
+        // === FILE UPLOAD FUNCTIONALITY ===
+        
+        // Initialize upload functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            const uploadArea = document.getElementById('upload-area');
+            const fileInput = document.getElementById('file-input');
+            
+            // Drag and drop handlers
+            uploadArea.addEventListener('dragover', handleDragOver);
+            uploadArea.addEventListener('dragleave', handleDragLeave);
+            uploadArea.addEventListener('drop', handleDrop);
+            
+            // File input change handler
+            fileInput.addEventListener('change', handleFileSelection);
+            
+            // Load initial data
+            refreshAvailableData();
+            loadAvailableSymbols();
+        });
+
+        function handleDragOver(event) {
+            event.preventDefault();
+            event.stopPropagation();
+            document.getElementById('upload-area').classList.add('drag-over');
+        }
+
+        function handleDragLeave(event) {
+            event.preventDefault();
+            event.stopPropagation();
+            document.getElementById('upload-area').classList.remove('drag-over');
+        }
+
+        function handleDrop(event) {
+            event.preventDefault();
+            event.stopPropagation();
+            document.getElementById('upload-area').classList.remove('drag-over');
+            
+            const files = event.dataTransfer.files;
+            handleFiles(files);
+        }
+
+        function handleFileSelection(event) {
+            const files = event.target.files;
+            handleFiles(files);
+        }
+
+        async function handleFiles(files) {
+            const resultsContainer = document.getElementById('upload-results');
+            resultsContainer.innerHTML = '';
+            
+            // Show progress
+            document.getElementById('upload-progress').style.display = 'block';
+            
+            for (let i = 0; i < files.length; i++) {
+                const file = files[i];
+                
+                // Update progress
+                const progress = ((i + 1) / files.length) * 100;
+                document.getElementById('upload-progress-fill').style.width = progress + '%';
+                
+                try {
+                    const result = await uploadFile(file);
+                    displayUploadResult(file.name, result);
+                } catch (error) {
+                    displayUploadResult(file.name, { success: false, error: error.message });
+                }
+            }
+            
+            // Hide progress
+            document.getElementById('upload-progress').style.display = 'none';
+            
+            // Refresh data lists
+            refreshAvailableData();
+            loadAvailableSymbols();
+        }
+
+        async function uploadFile(file) {
+            const formData = new FormData();
+            formData.append('file', file);
+            
+            const response = await fetch('/api/data/upload', {
+                method: 'POST',
+                body: formData
+            });
+            
+            const result = await response.json();
+            
+            if (!response.ok) {
+                throw new Error(result.error || 'Upload failed');
+            }
+            
+            return result;
+        }
+
+        function displayUploadResult(filename, result) {
+            const resultsContainer = document.getElementById('upload-results');
+            
+            const resultDiv = document.createElement('div');
+            resultDiv.className = 'upload-result-item ' + (result.success ? 'upload-result-success' : 'upload-result-error');
+            
+            if (result.success) {
+                resultDiv.innerHTML = 
+                    '<span>✅</span>' +
+                    '<div>' +
+                        '<strong>' + filename + '</strong><br>' +
+                        '<small>' + result.symbol + ' ' + result.timeframe + ' - ' + result.bars + ' bars</small>' +
+                    '</div>';
+            } else {
+                resultDiv.innerHTML = 
+                    '<span>❌</span>' +
+                    '<div>' +
+                        '<strong>' + filename + '</strong><br>' +
+                        '<small>' + result.error + '</small>' +
+                    '</div>';
+            }
+            
+            resultsContainer.appendChild(resultDiv);
+        }
+
+        async function refreshAvailableData() {
+            try {
+                const response = await fetch('/api/data/available');
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    displayAvailableData(data.data);
+                } else {
+                    console.error('Failed to load available data:', data.error);
+                    displayAvailableData([]);
+                }
+            } catch (error) {
+                console.error('Error refreshing available data:', error);
+                displayAvailableData([]);
+            }
+        }
+
+        function displayAvailableData(dataList) {
+            const container = document.getElementById('available-data-list');
+            
+            if (dataList.length === 0) {
+                container.innerHTML = '<p style="color: #94a3b8; text-align: center; padding: 1rem;">No data files uploaded yet</p>';
+                return;
+            }
+            
+            container.innerHTML = dataList.map(item => 
+                '<div class="data-file-item">' +
+                    '<div class="data-file-info">' +
+                        '<div class="data-file-name">' + item.filename + '</div>' +
+                        '<div class="data-file-details">' +
+                            item.symbol + ' ' + item.timeframe + ' • ' + item.bars + ' bars • ' + formatFileSize(item.file_size) +
+                            '<br>' +
+                            '<small>' + new Date(item.upload_date).toLocaleString() + '</small>' +
+                        '</div>' +
+                    '</div>' +
+                    '<div class="data-file-actions">' +
+                        '<button class="btn btn-danger btn-small" onclick="deleteDataFile(\'' + item.filename + '\')">Delete</button>' +
+                    '</div>' +
+                '</div>'
+            ).join('');
+        }
+
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+
+        async function deleteDataFile(filename) {
+            if (!confirm('Are you sure you want to delete ' + filename + '?')) {
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/data/' + filename, {
+                    method: 'DELETE'
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    showAlert('success', 'Data file deleted successfully');
+                    refreshAvailableData();
+                    loadAvailableSymbols();
+                } else {
+                    showAlert('error', result.error || 'Failed to delete file');
+                }
+            } catch (error) {
+                console.error('Error deleting data file:', error);
+                showAlert('error', 'Failed to delete file');
+            }
+        }
+
+        async function loadAvailableSymbols() {
+            try {
+                const response = await fetch('/api/data/symbols');
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                
+                if (data.success && data.symbols) {
+                    const symbolSelect = document.getElementById('backtest-symbol');
+                    const optimizationSymbolSelect = document.getElementById('optimization-symbol');
+                    
+                    if (symbolSelect) {
+                        symbolSelect.innerHTML = '<option value="">Select Symbol...</option>';
+                        
+                        data.symbols.forEach(symbol => {
+                            const option = document.createElement('option');
+                            option.value = symbol;
+                            option.textContent = symbol;
+                            symbolSelect.appendChild(option);
+                        });
+                    }
+                    
+                    // Update optimization symbol select too
+                    if (optimizationSymbolSelect) {
+                        optimizationSymbolSelect.innerHTML = '<option value="">Select Symbol...</option>';
+                        
+                        data.symbols.forEach(symbol => {
+                            const option = document.createElement('option');
+                            option.value = symbol;
+                            option.textContent = symbol;
+                            optimizationSymbolSelect.appendChild(option);
+                        });
+                    }
+                } else {
+                    console.warn('No symbols data received or API call failed');
+                }
+            } catch (error) {
+                console.error('Error loading symbols:', error);
+                // Fallback to default symbols
+                const symbolSelect = document.getElementById('backtest-symbol');
+                const optimizationSymbolSelect = document.getElementById('optimization-symbol');
+                
+                if (symbolSelect) {
+                    symbolSelect.innerHTML = '<option value="">Select Symbol...</option><option value="EURUSD">EURUSD</option><option value="GBPUSD">GBPUSD</option><option value="GOLD">GOLD</option>';
+                }
+                
+                if (optimizationSymbolSelect) {
+                    optimizationSymbolSelect.innerHTML = '<option value="">Select Symbol...</option><option value="EURUSD">EURUSD</option><option value="GBPUSD">GBPUSD</option><option value="GOLD">GOLD</option>';
+                }
+            }
+        }
+
+        async function loadAvailableTimeframes(symbol) {
+            try {
+                const response = await fetch('/api/data/' + encodeURIComponent(symbol) + '/timeframes');
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                
+                if (data.success && data.timeframes) {
+                    const timeframeSelect = document.getElementById('backtest-timeframe');
+                    const optimizationTimeframeSelect = document.getElementById('optimization-timeframe');
+                    
+                    if (timeframeSelect) {
+                        timeframeSelect.innerHTML = '<option value="">Select Timeframe...</option>';
+                        
+                        data.timeframes.forEach(timeframe => {
+                            const option = document.createElement('option');
+                            option.value = timeframe;
+                            option.textContent = timeframe;
+                            timeframeSelect.appendChild(option);
+                        });
+                    }
+                    
+                    // Update optimization timeframe select too
+                    if (optimizationTimeframeSelect) {
+                        optimizationTimeframeSelect.innerHTML = '<option value="">Select Timeframe...</option>';
+                        
+                        data.timeframes.forEach(timeframe => {
+                            const option = document.createElement('option');
+                            option.value = timeframe;
+                            option.textContent = timeframe;
+                            optimizationTimeframeSelect.appendChild(option);
+                        });
+                    }
+                } else {
+                    console.warn('No timeframes data received for symbol:', symbol);
+                }
+            } catch (error) {
+                console.error('Error loading timeframes:', error);
+                // Fallback to default timeframes
+                const timeframeSelect = document.getElementById('backtest-timeframe');
+                const optimizationTimeframeSelect = document.getElementById('optimization-timeframe');
+                
+                if (timeframeSelect) {
+                    timeframeSelect.innerHTML = '<option value="">Select Timeframe...</option><option value="M1">M1</option><option value="M5">M5</option><option value="M15">M15</option><option value="H1">H1</option><option value="H4">H4</option><option value="D1">D1</option>';
+                }
+                
+                if (optimizationTimeframeSelect) {
+                    optimizationTimeframeSelect.innerHTML = '<option value="">Select Timeframe...</option><option value="M1">M1</option><option value="M5">M5</option><option value="M15">M15</option><option value="H1">H1</option><option value="H4">H4</option><option value="D1">D1</option>';
+                }
+            }
+        }
+
+        // Add event listeners for symbol changes
+        document.addEventListener('DOMContentLoaded', function() {
+            const symbolSelect = document.getElementById('backtest-symbol');
+            const optimizationSymbolSelect = document.getElementById('optimization-symbol');
+            
+            symbolSelect.addEventListener('change', function() {
+                if (this.value) {
+                    loadAvailableTimeframes(this.value);
+                }
+            });
+            
+            optimizationSymbolSelect.addEventListener('change', function() {
+                if (this.value) {
+                    loadAvailableTimeframes(this.value);
+                }
+            });
+        });
+
+        // Auto-refresh results every 30 seconds
+        setInterval(loadResults, 30000);
+
+        // OPTIMIZATION FUNCTIONALITY - MISSING FUNCTION ADDED
+        async function runOptimization() {
+            console.log('🚀 Starting optimization...');
+            
+            try {
+                // Validate inputs
+                const eaName = document.getElementById('optimization-ea-select').value;
+                const symbol = document.getElementById('optimization-symbol').value;
+                const timeframe = document.getElementById('optimization-timeframe').value;
+                const startDate = document.getElementById('optimization-start-date').value;
+                const endDate = document.getElementById('optimization-end-date').value;
+                
+                if (!eaName || !symbol || !timeframe || !startDate || !endDate) {
+                    showAlert('error', 'Please fill in all required fields');
+                    return;
+                }
+                
+                // Show progress immediately
+                showOptimizationProgress('Starting optimization...', 0);
+                
+                // Disable the button to prevent multiple clicks
+                const button = document.querySelector('button[onclick="runOptimization()"]');
+                const originalText = button.textContent;
+                button.disabled = true;
+                button.textContent = '🔄 Running Optimization...';
+                button.style.backgroundColor = '#f59e0b';
+                
+                // Collect optimization parameters
+                const parameters = collectOptimizationParameters();
+                if (parameters.length === 0) {
+                    showAlert('error', 'No optimization parameters configured');
+                    resetOptimizationButton(button, originalText);
+                    return;
+                }
+                
+                showOptimizationProgress('Preparing parameters...', 10);
+                
+                // Prepare optimization request
+                const optimizationData = {
+                    ea_name: eaName,
+                    symbol: symbol,
+                    timeframe: timeframe,
+                    start_date: startDate,
+                    end_date: endDate,
+                    strategy_type: 'trend_following', // Default strategy type
+                    parameters: parameters,
+                    optimization_type: document.getElementById('optimization-type').value || 'genetic_algorithm',
+                    fitness_function: document.getElementById('optimization-fitness').value || 'profit_factor',
+                    max_iterations: parseInt(document.getElementById('optimization-iterations').value) || 100,
+                    initial_balance: 10000.0
+                };
+                
+                console.log('📊 Optimization configuration:', optimizationData);
+                showOptimizationProgress('Submitting optimization request...', 20);
+                
+                // Start optimization
+                const response = await fetch('/api/strategy-tester/optimize', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(optimizationData)
+                });
+                
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.message || 'Optimization failed');
+                }
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    // Show completion with animation
+                    showOptimizationProgress('Optimization completed successfully!', 100);
+                    
+                    // Show success alert
+                    showAlert('success', '✅ Optimization completed! Best fitness: ' + result.best_fitness.toFixed(3));
+                    
+                    // Display results immediately
+                    displayOptimizationResult(result);
+                    
+                    // Auto-switch to results tab after 2 seconds
+                    setTimeout(() => {
+                        switchTab('results');
+                        hideOptimizationProgress();
+                        console.log('✅ Optimization completed, switched to results tab');
+                    }, 2000);
+                    
+                    // Reset button after 3 seconds
+                    setTimeout(() => {
+                        resetOptimizationButton(button, originalText);
+                    }, 3000);
+                    
+                    console.log('🎉 Optimization successful:', result);
+                    
+                } else {
+                    throw new Error(result.message || 'Optimization failed');
+                }
+                
+            } catch (error) {
+                console.error('❌ Optimization error:', error);
+                showAlert('error', 'Optimization failed: ' + error.message);
+                hideOptimizationProgress();
+                
+                // Reset button on error
+                const button = document.querySelector('button[onclick="runOptimization()"]');
+                resetOptimizationButton(button, '🔧 Run Optimization');
+            }
+        }
+
+        function showOptimizationProgress(message, percentage) {
+            const progressBar = document.getElementById('optimization-progress');
+            const progressFill = document.getElementById('optimization-progress-fill');
+            
+            progressBar.style.display = 'block';
+            progressFill.style.width = percentage + '%';
+            
+            // Add status message
+            let statusElement = document.getElementById('optimization-status');
+            if (!statusElement) {
+                statusElement = document.createElement('div');
+                statusElement.id = 'optimization-status';
+                statusElement.style.cssText = 'text-align: center; margin-top: 0.5rem; color: #3b82f6; font-weight: 600; font-size: 0.9rem;';
+                progressBar.parentNode.insertBefore(statusElement, progressBar.nextSibling);
+            }
+            statusElement.textContent = message;
+            
+            console.log('📊 Optimization Progress: ' + percentage + '% - ' + message);
+        }
+
+        function hideOptimizationProgress() {
+            const progressBar = document.getElementById('optimization-progress');
+            const statusElement = document.getElementById('optimization-status');
+            
+            progressBar.style.display = 'none';
+            if (statusElement) {
+                statusElement.remove();
+            }
+        }
+
+        function resetOptimizationButton(button, originalText) {
+            button.disabled = false;
+            button.textContent = originalText;
+            button.style.backgroundColor = '#3b82f6'; // Reset to original blue
+        }
+
+        // Add live progress monitoring for long-running optimizations
+        let optimizationMonitorInterval = null;
+
+        function startOptimizationMonitoring() {
+            // Simulate progress updates for genetic algorithm
+            let progress = 25;
+            const messages = [
+                'Initializing population...',
+                'Running generation 1...',
+                'Evaluating fitness...',
+                'Running generation 2...',
+                'Optimizing parameters...',
+                'Running generation 3...',
+                'Finding best solutions...',
+                'Finalizing results...'
+            ];
+            
+            let messageIndex = 0;
+            
+            optimizationMonitorInterval = setInterval(() => {
+                if (progress < 95 && messageIndex < messages.length) {
+                    progress += Math.random() * 15; // Random progress increment
+                    showOptimizationProgress(messages[messageIndex], Math.min(progress, 95));
+                    messageIndex++;
+                    
+                    if (messageIndex >= messages.length) {
+                        clearInterval(optimizationMonitorInterval);
+                    }
+                }
+            }, 2000); // Update every 2 seconds
+        }
+    </script>
+        </div>
+    </main>
+</body>
+</html> 

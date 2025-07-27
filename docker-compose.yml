@@ -1,0 +1,67 @@
+version: "3.8"
+
+services:
+  qnti-trading:
+    build: .
+    container_name: qnti-trading-system
+    ports:
+      - "5002:5002" # QNTI Web Interface
+    volumes:
+      - ./data:/app/data # Persist ML database
+      - ./logs:/app/logs # Persist logs
+      - ./config:/app/config # Configuration files
+    environment:
+      - PYTHONPATH=/app
+      - FLASK_ENV=production
+      - QNTI_PORT=5002
+      - TZ=UTC # Set timezone for consistent trading hours
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5002/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    deploy:
+      resources:
+        limits:
+          cpus: "2.0"
+          memory: 2G
+        reservations:
+          cpus: "0.5"
+          memory: 512M
+
+  # Optional: Add Nginx reverse proxy
+  nginx:
+    image: nginx:alpine
+    container_name: qnti-nginx
+    ports:
+      - "80:80"
+      - "443:443" # For HTTPS if you have SSL certificates
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./ssl:/etc/nginx/ssl:ro # SSL certificates (optional)
+    depends_on:
+      - qnti-trading
+    restart: unless-stopped
+
+  # Optional: Add monitoring with Prometheus & Grafana
+  # prometheus:
+  #   image: prom/prometheus
+  #   container_name: qnti-prometheus
+  #   ports:
+  #     - "9090:9090"
+  #   volumes:
+  #     - ./prometheus.yml:/etc/prometheus/prometheus.yml
+  #   restart: unless-stopped
+
+networks:
+  default:
+    name: qnti-network
+    driver: bridge
+
+volumes:
+  qnti-data:
+    driver: local
+  qnti-logs:
+    driver: local

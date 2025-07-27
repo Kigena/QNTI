@@ -1,0 +1,16 @@
+{
+  "build": {
+    "buildCommand": "pip install -r requirements.txt"
+  },
+  "deploy": {
+    "startCommand": "python qnti_main_system.py",
+    "healthcheckPath": "/health",
+    "healthcheckTimeout": 300
+  },
+  "environment": {
+    "PYTHONPATH": "/app",
+    "FLASK_ENV": "production",
+    "QNTI_PORT": "5002",
+    "PORT": "5002"
+  }
+} 

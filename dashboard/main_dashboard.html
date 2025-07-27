@@ -1,0 +1,2832 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QNTI Dashboard - Overview</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.2/socket.io.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            color: #e2e8f0;
+            min-height: 100vh;
+            display: flex;
+        }
+
+        /* Sidebar Navigation */
+        .sidebar {
+            width: 280px;
+            background: rgba(15, 23, 42, 0.95);
+            backdrop-filter: blur(10px);
+            border-right: 1px solid #334155;
+            height: 100vh;
+            position: fixed;
+            left: 0;
+            top: 0;
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+        }
+
+        .sidebar-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid #334155;
+        }
+
+        .logo {
+            font-size: 1.3rem;
+            font-weight: bold;
+            background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-align: center;
+        }
+
+        .sidebar-content {
+            flex: 1;
+            padding: 1rem 0;
+        }
+
+        .nav-section {
+            margin-bottom: 2rem;
+        }
+
+        .nav-section-title {
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            padding: 0 1.5rem 0.5rem 1.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .nav-link {
+            color: #94a3b8;
+            text-decoration: none;
+            padding: 0.75rem 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            transition: all 0.2s;
+            border-left: 3px solid transparent;
+        }
+
+        .nav-link:hover {
+            background: rgba(100, 116, 139, 0.1);
+            color: #f1f5f9;
+            border-left-color: #3b82f6;
+        }
+
+        .nav-link.active {
+            background: rgba(59, 130, 246, 0.1);
+            color: #3b82f6;
+            border-left-color: #3b82f6;
+        }
+
+        .nav-icon {
+            font-size: 1.2rem;
+            width: 20px;
+            text-align: center;
+        }
+
+        /* Main Content Area */
+        .main-content {
+            flex: 1;
+            margin-left: 280px;
+            min-height: 100vh;
+            background: transparent;
+        }
+
+        .main-header {
+            background: rgba(15, 23, 42, 0.8);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid #334155;
+            padding: 1rem 2rem;
+            position: sticky;
+            top: 0;
+            z-index: 50;
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .page-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #f1f5f9;
+        }
+
+        .status-indicators {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        .status-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.9rem;
+        }
+
+        .status-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        .status-connected { background: #10b981; }
+        .status-warning { background: #f59e0b; }
+        .status-error { background: #ef4444; }
+        
+        /* SMC Status Indicators */
+        .status-indicator {
+            padding: 0.25rem 0.75rem;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        
+        .status-indicator.status-connected {
+            background: rgba(16, 185, 129, 0.2);
+            color: #10b981;
+            border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+        
+        .status-indicator.status-error {
+            background: rgba(239, 68, 68, 0.2);
+            color: #ef4444;
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+        
+        .status-indicator.status-warning {
+            background: rgba(245, 158, 11, 0.2);
+            color: #f59e0b;
+            border: 1px solid rgba(245, 158, 11, 0.3);
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .main-container {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 2rem;
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 1.5rem;
+        }
+
+        .dashboard-card {
+            background: rgba(30, 41, 59, 0.8);
+            backdrop-filter: blur(10px);
+            border: 1px solid #334155;
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid #475569;
+        }
+
+        .card-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #f1f5f9;
+        }
+
+        .metric-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        .metric-item {
+            text-align: center;
+            padding: 1rem;
+            background: rgba(51, 65, 85, 0.5);
+            border-radius: 8px;
+            border: 1px solid #475569;
+        }
+
+        .metric-value {
+            font-size: 1.8rem;
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+        }
+
+        .metric-label {
+            font-size: 0.85rem;
+            color: #94a3b8;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .positive { color: #10b981; }
+        .negative { color: #ef4444; }
+        .neutral { color: #64748b; }
+
+        .btn {
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            font-weight: 500;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+
+        .btn-primary { background: #3b82f6; color: white; }
+        .btn-success { background: #10b981; color: white; }
+        .btn-warning { background: #f59e0b; color: white; }
+        .btn-danger { background: #ef4444; color: white; }
+        .btn-secondary { background: #64748b; color: white; }
+
+        .btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        }
+
+        .chart-container {
+            position: relative;
+            height: 250px;
+            margin-top: 1rem;
+        }
+
+        .ai-insight-box {
+            background: rgba(139, 92, 246, 0.1);
+            border: 1px solid #8b5cf6;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-top: 1rem;
+        }
+
+        .ai-insight-header {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 0.5rem;
+            color: #8b5cf6;
+            font-weight: 600;
+        }
+
+        .ai-insight-content {
+            color: #e2e8f0;
+            font-size: 0.9rem;
+            line-height: 1.5;
+        }
+
+        .vision-upload-area {
+            border: 2px dashed #475569;
+            border-radius: 12px;
+            padding: 2rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 1rem;
+            background: rgba(51, 65, 85, 0.2);
+            min-height: 120px;
+        }
+
+        .vision-upload-area:hover {
+            border-color: #3b82f6;
+            background: rgba(59, 130, 246, 0.1);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(59, 130, 246, 0.15);
+        }
+
+        .vision-upload-area:active {
+            transform: translateY(0);
+        }
+
+        .emergency-controls {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid #475569;
+        }
+
+        @media (max-width: 1200px) {
+            .main-container {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .main-container {
+                grid-template-columns: 1fr;
+                padding: 1rem;
+            }
+            
+            .nav-menu {
+                display: none;
+            }
+        }
+
+        .ea-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+        }
+
+        .ea-status-card {
+            background: rgba(51, 65, 85, 0.3);
+            border: 1px solid #334155;
+            border-radius: 8px;
+            padding: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .ea-status-card:hover {
+            background: rgba(51, 65, 85, 0.5);
+            border-color: #475569;
+        }
+
+        .ea-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.75rem;
+        }
+
+        .ea-name {
+            font-weight: 600;
+            color: #f1f5f9;
+            font-size: 0.9rem;
+        }
+
+        .ea-status {
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+
+        .status-active {
+            background: rgba(16, 185, 129, 0.2);
+            color: #10b981;
+            border: 1px solid #10b981;
+        }
+
+        .status-inactive {
+            background: rgba(239, 68, 68, 0.2);
+            color: #ef4444;
+            border: 1px solid #ef4444;
+        }
+
+        .ea-metrics {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .ea-metric {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .ea-metric .metric-label {
+            color: #94a3b8;
+            font-size: 0.8rem;
+        }
+
+        .ea-metric .metric-value {
+            color: #f1f5f9;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .profit-positive {
+            color: #10b981 !important;
+        }
+
+        .profit-negative {
+            color: #ef4444 !important;
+        }
+
+        .trade-type-buy {
+            background: rgba(16, 185, 129, 0.2);
+            color: #10b981;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+
+        .trade-type-sell {
+            background: rgba(239, 68, 68, 0.2);
+            color: #ef4444;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+
+        .metric-value.positive {
+            color: #10b981;
+        }
+
+        .metric-value.negative {
+            color: #ef4444;
+        }
+
+        .metric-value.neutral {
+            color: #94a3b8;
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: rgba(30, 41, 59, 0.6);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .data-table th,
+        .data-table td {
+            padding: 0.75rem;
+            text-align: left;
+            border-bottom: 1px solid #475569;
+        }
+
+        .data-table th {
+            background: rgba(51, 65, 85, 0.8);
+            font-weight: 600;
+            color: #f1f5f9;
+        }
+
+        .data-table td {
+            color: #e2e8f0;
+        }
+
+        .table-container {
+            overflow-x: auto;
+            border-radius: 8px;
+        }
+
+        /* ADD ONLY THESE LINES TO YOUR EXISTING CSS */
+        .results-panel {
+            background: rgba(15, 23, 42, 0.7);
+            border: 1px solid #334155;
+            border-radius: 12px;
+            padding: 0;
+            margin-top: 1.5rem;
+            overflow: hidden;
+            display: none;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+
+        .results-panel.show { display: block; animation: slideIn 0.3s ease-out; }
+        @keyframes slideIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+        .results-header { background: rgba(59, 130, 246, 0.1); border-bottom: 1px solid #334155; padding: 1.5rem; display: flex; justify-content: space-between; align-items: center; }
+        .results-title { font-size: 1.3rem; font-weight: 600; color: #f1f5f9; display: flex; align-items: center; gap: 0.5rem; }
+        .results-content { padding: 1.5rem; }
+        .results-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; margin-bottom: 1.5rem; }
+        .result-item { background: rgba(51, 65, 85, 0.5); padding: 1rem; border-radius: 8px; border-left: 3px solid #3b82f6; }
+        .result-item.signal-buy { border-left-color: #10b981; } .result-item.signal-sell { border-left-color: #ef4444; }
+        .result-label { color: #94a3b8; font-size: 0.85rem; margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.5px; }
+        .result-value { color: #f1f5f9; font-size: 1.1rem; font-weight: 600; }
+        .signal-buy .result-value { color: #10b981; } .signal-sell .result-value { color: #ef4444; }
+        
+        .confidence-badge { 
+            padding: 0.5rem 1rem; 
+            border-radius: 20px; 
+            font-size: 0.9rem; 
+            font-weight: 600; 
+        }
+        .confidence-high { 
+            background: rgba(16, 185, 129, 0.2); 
+            color: #10b981; 
+            border: 1px solid #10b981; 
+        }
+        .confidence-medium { 
+            background: rgba(245, 158, 11, 0.2); 
+            color: #f59e0b; 
+            border: 1px solid #f59e0b; 
+        }
+        .confidence-low { 
+            background: rgba(239, 68, 68, 0.2); 
+            color: #ef4444; 
+            border: 1px solid #ef4444; 
+        }
+
+        /* Responsive Design */
+        @media (max-width: 1024px) {
+            .sidebar {
+                transform: translateX(-100%);
+                transition: transform 0.3s ease;
+            }
+            
+            .sidebar.open {
+                transform: translateX(0);
+            }
+            
+            .main-content {
+                margin-left: 0;
+            }
+            
+            .main-header {
+                padding-left: 3rem;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .main-container {
+                grid-template-columns: 1fr;
+                padding: 1rem;
+            }
+            
+            .sidebar {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Sidebar Navigation -->
+    <nav class="sidebar">
+        <div class="sidebar-header">
+            <div class="logo">Quantum Nexus Trading Intelligence</div>
+        </div>
+        
+        <div class="sidebar-content">
+            <div class="nav-section">
+                <div class="nav-section-title">Main</div>
+                <a href="#" class="nav-link active">
+                    <span class="nav-icon">📊</span>
+                    <span>Dashboard</span>
+                </a>
+                <a href="vision_trading_charts.html" class="nav-link">
+                    <span class="nav-icon">👁️</span>
+                    <span>Vision Trading</span>
+                </a>
+            </div>
+
+            <div class="nav-section">
+                <div class="nav-section-title">Trading</div>
+                <a href="trading_center.html" class="nav-link">
+                    <span class="nav-icon">📈</span>
+                    <span>Trading Center</span>
+                </a>
+                <a href="market_intelligence_board.html" class="nav-link">
+                    <span class="nav-icon">🧠</span>
+                    <span>Intelligence</span>
+                </a>
+                <a href="forex_advisor_chat.html" class="nav-link">
+                    <span class="nav-icon">💬</span>
+                    <span>Advisor Chat</span>
+                </a>
+                <a href="ea_management.html" class="nav-link">
+                    <span class="nav-icon">🤖</span>
+                    <span>EA Manager</span>
+                </a>
+                <a href="unified_automation.html" class="nav-link">
+                    <span class="nav-icon">🎯</span>
+                    <span>Unified Automation</span>
+                </a>
+            </div>
+
+            <div class="nav-section">
+                <div class="nav-section-title">Analysis</div>
+                <a href="strategy_tester.html" class="nav-link">
+                    <span class="nav-icon">🧪</span>
+                    <span>Strategy Tester</span>
+                </a>
+                <a href="analytics_reports.html" class="nav-link">
+                    <span class="nav-icon">📊</span>
+                    <span>Analytics</span>
+                </a>
+                <a href="smc_analysis.html" class="nav-link">
+                    <span class="nav-icon">🎯</span>
+                    <span>Smart Money Concepts</span>
+                </a>
+                <a href="smc_automation.html" class="nav-link">
+                    <span class="nav-icon">🚀</span>
+                    <span>SMC Automation</span>
+                </a>
+            </div>
+
+
+        </div>
+    </nav>
+
+    <!-- Main Content Area -->
+    <main class="main-content">
+        <div class="main-header">
+            <div class="header-content">
+                <div class="page-title">Dashboard Overview</div>
+                <div class="status-indicators">
+                    <div class="status-item">
+                        <span>MT5:</span>
+                        <div class="status-dot status-error" id="mt5-status"></div>
+                    </div>
+                    <div class="status-item">
+                        <span>AI:</span>
+                        <div class="status-dot status-connected" id="ai-status"></div>
+                    </div>
+                    <div style="margin-left: 1rem; font-size: 0.9rem; color: #94a3b8;">
+                        <span id="last-update">--:--:--</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    <!-- Loading Indicator & Error Message for Redis Cache Integration -->
+    <div id="loading-indicator" style="display: none; position: fixed; top: 70px; left: 50%; transform: translateX(-50%); background: rgba(59, 130, 246, 0.9); color: white; padding: 1rem 2rem; border-radius: 8px; z-index: 1000; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);">
+        Loading...
+    </div>
+    
+    <div id="error-message" style="display: none; position: fixed; top: 70px; left: 50%; transform: translateX(-50%); background: rgba(239, 68, 68, 0.9); color: white; padding: 1rem 2rem; border-radius: 8px; z-index: 1000; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);">
+        Error message
+    </div>
+
+        <div class="main-container">
+        <!-- ROW 1: Account Overview + AI Vision Analysis (Wide) -->
+        <!-- Account Overview -->
+        <div class="dashboard-card">
+            <div class="card-header">
+                <h3 class="card-title">Account Overview</h3>
+                <button class="btn btn-primary" onclick="updateDashboard(); console.log('Manual refresh triggered!')">Refresh</button>
+            </div>
+            <div class="metric-grid">
+                <div class="metric-item">
+                    <div class="metric-value" id="account-balance">$0.00</div>
+                    <div class="metric-label">Account Balance</div>
+                </div>
+                <div class="metric-item">
+                    <div class="metric-value" id="account-equity">$0.00</div>
+                    <div class="metric-label">Account Equity</div>
+                </div>
+                <div class="metric-item">
+                    <div class="metric-value" id="daily-pnl">$0.00</div>
+                    <div class="metric-label">Daily P&L</div>
+                </div>
+                <div class="metric-item">
+                    <div class="metric-value" id="total-trades">0</div>
+                    <div class="metric-label">Total Trades</div>
+                </div>
+                <div class="metric-item">
+                    <div class="metric-value" id="open-trades">0</div>
+                    <div class="metric-label">Open Trades</div>
+                </div>
+                <div class="metric-item">
+                    <div class="metric-value" id="win-rate">0.0%</div>
+                    <div class="metric-label">Win Rate</div>
+                </div>
+            </div>
+            <div class="ai-insight-box">
+                <div class="ai-insight-header">
+                    <span>🤖</span>
+                    <span>AI Account Analysis</span>
+                </div>
+                <div class="ai-insight-content" id="account-ai-insight">
+                    Account health is stable. No margin concerns detected. Consider diversifying positions across multiple pairs.
+                </div>
+            </div>
+        </div>
+
+        <!-- AI Vision Analysis - WIDE LAYOUT SPANNING 2 COLUMNS -->
+        <div class="dashboard-card" style="grid-column: span 2;">
+            <div class="card-header">
+                <h3 class="card-title">🧠 AI Vision Analysis</h3>
+                <button class="btn btn-primary" onclick="openVisionModal()">📸 Analyze Chart</button>
+            </div>
+            
+            <!-- Enhanced Analysis Display Area with Better Visual Hierarchy -->
+            <div class="ai-insight-box" style="min-height: 320px; background: linear-gradient(135deg, rgba(139, 92, 246, 0.15), rgba(59, 130, 246, 0.08)); border: 1px solid rgba(139, 92, 246, 0.4); box-shadow: 0 4px 12px rgba(139, 92, 246, 0.1);">
+                <div class="ai-insight-header" style="background: rgba(139, 92, 246, 0.1); padding: 0.75rem 1.25rem; border-radius: 8px 8px 0 0; border-bottom: 1px solid rgba(139, 92, 246, 0.2);">
+                    <span style="font-size: 1.2rem;">👁️</span>
+                    <span style="font-weight: 600; color: #8b5cf6; margin-left: 0.5rem;">AI Chart Analysis</span>
+                    <span style="float: right; font-size: 0.8rem; color: #94a3b8; font-weight: normal;">Powered by ChatGPT-4 Vision</span>
+                </div>
+                <div class="ai-insight-content" id="vision-ai-insight" style="min-height: 260px; line-height: 1.6; padding: 1.75rem; font-size: 1rem; max-height: 450px; overflow-y: auto; background: rgba(30, 41, 59, 0.3);">
+                    <div style="text-align: center; color: #94a3b8; margin-top: 60px;">
+                        <div style="font-size: 3rem; margin-bottom: 1.5rem; opacity: 0.7;">📊</div>
+                        <h4 style="color: #e2e8f0; margin-bottom: 1rem; font-weight: 500;">Upload Chart for Professional Analysis</h4>
+                        <p style="font-size: 0.95rem; line-height: 1.5; max-width: 500px; margin: 0 auto;">Get comprehensive technical analysis with Smart Money Concepts, market structure insights, and institutional trading levels.</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Enhanced Upload Area with Superior Visual Balance -->
+            <div style="display: grid; grid-template-columns: 1.8fr 1fr; gap: 2rem; margin-top: 2rem;">
+                <!-- Premium Upload Zone with Enhanced Design -->
+                <div class="vision-upload-area" onclick="document.getElementById('chart-image-upload').click()" 
+                     style="padding: 2.5rem 2rem; text-align: center; border: 2px dashed #475569; border-radius: 16px; cursor: pointer; 
+                            transition: all 0.4s ease; background: linear-gradient(135deg, rgba(59, 130, 246, 0.05), rgba(139, 92, 246, 0.05)); 
+                            min-height: 140px; display: flex; flex-direction: column; justify-content: center; position: relative; 
+                            overflow: hidden;"
+                     onmouseover="this.style.borderColor='#3b82f6'; this.style.background='linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(139, 92, 246, 0.1))'; this.style.transform='translateY(-2px)'; this.style.boxShadow='0 8px 25px rgba(59, 130, 246, 0.15)'"
+                     onmouseout="this.style.borderColor='#475569'; this.style.background='linear-gradient(135deg, rgba(59, 130, 246, 0.05), rgba(139, 92, 246, 0.05))'; this.style.transform='translateY(0)'; this.style.boxShadow='none'">
+                    
+                    <!-- Subtle Background Pattern -->
+                    <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; opacity: 0.03; background-image: radial-gradient(circle at 1px 1px, rgba(255,255,255,0.3) 1px, transparent 0); background-size: 20px 20px;"></div>
+                    
+                    <div style="font-size: 3.5rem; margin-bottom: 1.25rem; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));">📊</div>
+                    <div style="color: #f1f5f9; font-size: 1.2rem; font-weight: 600; margin-bottom: 0.75rem; letter-spacing: 0.025em;">Drop chart image here or click to upload</div>
+                    <div style="color: #94a3b8; font-size: 0.95rem; font-weight: 500;">Supports JPG, PNG, WebP • Max 10MB</div>
+                    <div style="margin-top: 1rem; padding: 0.5rem 1rem; background: rgba(59, 130, 246, 0.1); border-radius: 20px; font-size: 0.8rem; color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.2);">
+                        ✨ Professional-grade technical analysis
+                    </div>
+                    <input type="file" id="chart-image-upload" accept="image/*" style="display: none;" onchange="handleImageUpload(event)">
+                </div>
+                
+                <!-- Refined Analysis Control Panel -->
+                <div id="analysis-form" style="display: none; padding: 2rem 1.75rem; background: linear-gradient(135deg, rgba(51, 65, 85, 0.6), rgba(30, 41, 59, 0.4)); 
+                                                   border-radius: 16px; border: 1px solid #475569; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+                    <div style="margin-bottom: 1.25rem;">
+                        <label style="display: block; margin-bottom: 0.75rem; color: #cbd5e1; font-size: 0.9rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;">Trading Symbol</label>
+                        <select id="symbol-select" style="width: 100%; padding: 0.875rem; border: 1px solid #475569; border-radius: 10px; background: #334155; color: #f1f5f9; font-size: 0.95rem; font-weight: 500; transition: all 0.3s ease;"
+                                onfocus="this.style.borderColor='#3b82f6'; this.style.boxShadow='0 0 0 3px rgba(59, 130, 246, 0.1)'"
+                                onblur="this.style.borderColor='#475569'; this.style.boxShadow='none'">
+                            <option value="EURUSD">EURUSD</option>
+                            <option value="GBPUSD">GBPUSD</option>
+                            <option value="USDJPY">USDJPY</option>
+                            <option value="USDCHF">USDCHF</option>
+                            <option value="AUDUSD">AUDUSD</option>
+                            <option value="USDCAD">USDCAD</option>
+                            <option value="NZDUSD">NZDUSD</option>
+                            <option value="EURJPY">EURJPY</option>
+                            <option value="GBPJPY">GBPJPY</option>
+                            <option value="EURGBP">EURGBP</option>
+                            <option value="XAUUSD" selected>XAUUSD (Gold)</option>
+                            <option value="XAGUSD">XAGUSD (Silver)</option>
+                            <option value="BTCUSD">BTCUSD</option>
+                            <option value="US30Cash">US30 (Dow Jones)</option>
+                            <option value="SPX500">S&P 500</option>
+                            <option value="NAS100">NASDAQ 100</option>
+                        </select>
+                    </div>
+                    <div style="margin-bottom: 1.5rem;">
+                        <label style="display: block; margin-bottom: 0.75rem; color: #cbd5e1; font-size: 0.9rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;">Timeframe</label>
+                        <select id="timeframe-select" style="width: 100%; padding: 0.875rem; border: 1px solid #475569; border-radius: 10px; background: #334155; color: #f1f5f9; font-size: 0.95rem; font-weight: 500; transition: all 0.3s ease;"
+                                onfocus="this.style.borderColor='#3b82f6'; this.style.boxShadow='0 0 0 3px rgba(59, 130, 246, 0.1)'"
+                                onblur="this.style.borderColor='#475569'; this.style.boxShadow='none'">
+                            <option value="M1">1 Minute</option>
+                            <option value="M5">5 Minutes</option>
+                            <option value="M15">15 Minutes</option>
+                            <option value="M30">30 Minutes</option>
+                            <option value="H1" selected>1 Hour</option>
+                            <option value="H4">4 Hours</option>
+                            <option value="D1">Daily</option>
+                            <option value="W1">Weekly</option>
+                        </select>
+                    </div>
+                    <button class="btn btn-primary" onclick="analyzeChart()" 
+                            style="width: 100%; padding: 1rem; font-weight: 600; font-size: 1rem; border-radius: 10px; 
+                                   background: linear-gradient(135deg, #3b82f6, #8b5cf6); border: none; color: white; 
+                                   transition: all 0.3s ease; text-transform: uppercase; letter-spacing: 0.05em;"
+                            onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 6px 20px rgba(59, 130, 246, 0.3)'"
+                            onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none'">
+                        🔍 Analyze Chart
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Enhanced Upload Status Display -->
+            <div id="upload-status" style="display: none; margin-top: 1.5rem; padding: 1rem; border-radius: 12px; border: 1px solid #475569; background: rgba(51, 65, 85, 0.3);"></div>
+        </div>
+
+        <!-- ROW 2: Recent Trades - WIDE LAYOUT -->
+        <div class="dashboard-card" style="grid-column: span 3;">
+            <div class="card-header">
+                <h3 class="card-title">📊 Recent Trades</h3>
+                <button class="btn-secondary">View All</button>
+            </div>
+            <div class="table-container">
+                <table id="trades-table" class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Symbol</th>
+                            <th>Type</th>
+                            <th>Volume</th>
+                            <th>Entry Price</th>
+                            <th>Current Price</th>
+                            <th>P&L</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Trade rows will be populated here -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- ROW 3: Trading Statistics + System Health + EA Status -->
+        <!-- Trading Statistics -->
+        <div class="dashboard-card">
+            <div class="card-header">
+                <h3 class="card-title">📊 Trading Statistics</h3>
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+                <div class="metric-item">
+                    <div class="metric-value neutral" id="active-eas">0</div>
+                    <div class="metric-label">Active EAs</div>
+                </div>
+                <div class="metric-item">
+                    <div class="metric-value neutral" id="profit-factor">0.00</div>
+                    <div class="metric-label">Profit Factor</div>
+                </div>
+            </div>
+            <div class="emergency-controls">
+                <button class="btn btn-danger" style="font-size: 0.8rem; padding: 0.3rem 0.6rem; width: 100%; margin-bottom: 0.5rem;" onclick="emergencyCloseAll()">🚨 Emergency Close</button>
+                <button class="btn btn-warning" style="font-size: 0.8rem; padding: 0.3rem 0.6rem; width: 100%;" onclick="pauseAllEAs()">⏸️ Pause All</button>
+            </div>
+        </div>
+
+        <!-- System Health -->
+        <div class="dashboard-card">
+            <div class="card-header">
+                <h3 class="card-title">🔧 System Health</h3>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem; background: rgba(51, 65, 85, 0.3); border-radius: 4px; font-size: 0.85rem;">
+                    <span>MT5</span>
+                    <div class="status-dot status-error"></div>
+                </div>
+                <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem; background: rgba(51, 65, 85, 0.3); border-radius: 4px; font-size: 0.85rem;">
+                    <span>AI Services</span>
+                    <div class="status-dot status-connected"></div>
+                </div>
+                <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem; background: rgba(51, 65, 85, 0.3); border-radius: 4px; font-size: 0.85rem;">
+                    <span>Cache</span>
+                    <div class="status-dot status-warning"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- EA Status -->
+        <div class="dashboard-card">
+            <div class="card-header">
+                <h3 class="card-title">🤖 EA Status</h3>
+                <button class="btn-secondary" style="font-size: 0.8rem; padding: 0.3rem 0.6rem;">Manage</button>
+            </div>
+            <div id="ea-status-container" class="ea-grid" style="display: grid; gap: 0.5rem;">
+                <!-- EA status cards will be populated here -->
+                <div style="padding: 0.5rem; background: rgba(34, 197, 94, 0.1); border: 1px solid rgba(34, 197, 94, 0.2); border-radius: 4px; font-size: 0.8rem;">
+                    <div style="color: #22c55e; font-weight: 600;">Active EAs: 32</div>
+                    <div style="color: #94a3b8; font-size: 0.75rem;">Running normally</div>
+                </div>
+                <div style="padding: 0.5rem; background: rgba(59, 130, 246, 0.1); border: 1px solid rgba(59, 130, 246, 0.2); border-radius: 4px; font-size: 0.8rem;">
+                    <div style="color: #3b82f6; font-weight: 600;">Today P&L</div>
+                    <div style="color: #94a3b8; font-size: 0.75rem;" id="daily-pnl-ea">$0.00</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ROW 4: Equity Curve - WIDE LAYOUT -->
+        <div class="dashboard-card" style="grid-column: span 3;">
+            <div class="card-header">
+                <h3 class="card-title">📈 Equity Curve</h3>
+                <select id="equity-timeframe" onchange="updateEquityChart()">
+                    <option value="1D">Today</option>
+                    <option value="1W">1 Week</option>
+                    <option value="1M" selected>1 Month</option>
+                    <option value="3M">3 Months</option>
+                </select>
+            </div>
+            <div class="chart-container">
+                <canvas id="equity-chart"></canvas>
+            </div>
+            <div class="ai-insight-box">
+                <div class="ai-insight-header">
+                    <span>🤖</span>
+                    <span>AI Performance Analysis</span>
+                </div>
+                <div class="ai-insight-content" id="performance-ai-insight">
+                    Equity curve shows steady growth with controlled drawdowns. Current trend is positive with low volatility.
+                </div>
+            </div>
+        </div>
+
+        <!-- ROW 5: Smart Money Concepts Analysis - WIDE LAYOUT -->
+        <div class="dashboard-card" style="grid-column: span 3; display: none;" id="smc-dashboard-card">
+            <div class="card-header">
+                <h3 class="card-title">🎯 Smart Money Concepts Analysis</h3>
+                <div style="display: flex; gap: 10px; align-items: center;">
+                    <select id="smc-symbol-select" onchange="loadSMCAnalysis()">
+                        <option value="EURUSD">EURUSD</option>
+                        <option value="GBPUSD">GBPUSD</option>
+                        <option value="USDJPY">USDJPY</option>
+                        <option value="XAUUSD">XAUUSD</option>
+                        <option value="BTCUSD">BTCUSD</option>
+                    </select>
+                    <button onclick="refreshSMCAnalysis()" class="btn btn-primary" style="padding: 0.5rem 1rem; font-size: 0.9rem;">🔄 Refresh</button>
+                    <button onclick="hideSMCAnalysis()" style="background: none; border: none; color: #94a3b8; font-size: 1.2rem; cursor: pointer; padding: 0.5rem;">×</button>
+                </div>
+            </div>
+            <div id="smc-analysis-content">
+                <div style="text-align: center; padding: 2rem; color: #94a3b8;">
+                    <div style="font-size: 2rem; margin-bottom: 1rem;">📊</div>
+                    <p>Loading Smart Money Concepts analysis...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Vision Analysis Modal -->
+    <div id="vision-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 1000;">
+        <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #1e293b; padding: 2rem; border-radius: 12px; border: 1px solid #334155; width: 90%; max-width: 800px; max-height: 90vh; overflow-y: auto;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                <h3 style="color: #f1f5f9; margin: 0;">🧠 AI Chart Analysis</h3>
+                <button onclick="closeVisionModal()" style="background: none; border: none; color: #94a3b8; font-size: 1.5rem; cursor: pointer;">×</button>
+            </div>
+            <div id="vision-modal-content">
+                <!-- Modal content will be loaded here -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global variables for AI Vision Analysis
+        let currentAnalysisId = null;
+        
+        // Helper functions for AI Vision Analysis
+        function updateVisionStatus(message, statusClass) {
+            console.log('Vision Status:', message, statusClass);
+            // Update status indicators if they exist
+        }
+        
+        // Initialize Chart
+        const ctx = document.getElementById('equity-chart').getContext('2d');
+        const equityChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: Array.from({length: 30}, (_, i) => `Day ${i + 1}`),
+                datasets: [{
+                    label: 'Equity',
+                    data: Array.from({length: 30}, () => 10000 + Math.random() * 2000 - 500),
+                    borderColor: '#10b981',
+                    backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                    fill: true,
+                    tension: 0.4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false }
+                },
+                scales: {
+                    y: {
+                        grid: { color: 'rgba(100, 116, 139, 0.2)' },
+                        ticks: { color: '#94a3b8' }
+                    },
+                    x: {
+                        grid: { color: 'rgba(100, 116, 139, 0.2)' },
+                        ticks: { color: '#94a3b8' }
+                    }
+                }
+            }
+        });
+
+        // Update functions
+        function refreshData() {
+            console.log('Refreshing dashboard data...');
+            updateTimestamp();
+        }
+
+        function updateTimestamp() {
+            document.getElementById('last-update').textContent = new Date().toLocaleTimeString();
+        }
+
+        function emergencyCloseAll() {
+            if (confirm('Are you sure you want to close ALL positions? This action cannot be undone!')) {
+                console.log('Emergency close all positions');
+            }
+        }
+
+        function pauseAllEAs() {
+            if (confirm('Pause all Expert Advisors?')) {
+                console.log('Pausing all EAs');
+            }
+        }
+
+        function openVisionModal() {
+            document.getElementById('vision-modal').style.display = 'block';
+            loadVisionModalContent();
+        }
+
+        function closeVisionModal() {
+            document.getElementById('vision-modal').style.display = 'none';
+        }
+
+        function loadVisionModalContent() {
+            document.getElementById('vision-modal-content').innerHTML = `
+                <div class="vision-upload-area" onclick="document.getElementById('modal-upload').click()" style="margin-bottom: 1.5rem;">
+                    <div style="font-size: 3rem; margin-bottom: 0.5rem;">📸</div>
+                    <div style="color: #f1f5f9; font-size: 1.1rem; margin-bottom: 0.5rem;">Upload Chart for AI Analysis</div>
+                    <div style="color: #94a3b8;">Click to browse or drag & drop</div>
+                    <input type="file" id="modal-upload" accept="image/*" style="display: none;" onchange="handleModalUpload(event)">
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+                    <div>
+                        <label style="display: block; margin-bottom: 0.5rem; color: #94a3b8;">Symbol</label>
+                        <input type="text" placeholder="EURUSD" style="width: 100%; padding: 0.5rem; border: 1px solid #475569; border-radius: 4px; background: #334155; color: #f1f5f9;">
+                    </div>
+                    <div>
+                        <label style="display: block; margin-bottom: 0.5rem; color: #94a3b8;">Timeframe</label>
+                        <select style="width: 100%; padding: 0.5rem; border: 1px solid #475569; border-radius: 4px; background: #334155; color: #f1f5f9;">
+                            <option>M5</option>
+                            <option>M15</option>
+                            <option>H1</option>
+                            <option selected>H4</option>
+                            <option>D1</option>
+                        </select>
+                    </div>
+                </div>
+                <button class="btn btn-primary" style="width: 100%;" onclick="analyzeChart()">🔍 Analyze Chart</button>
+            `;
+        }
+
+        // Handle image upload and get analysis ID
+        async function handleImageUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            console.log('📸 Uploading chart image:', file.name);
+            
+            // Show upload status
+            const uploadStatus = document.getElementById('upload-status');
+            uploadStatus.style.display = 'block';
+            uploadStatus.innerHTML = `
+                <div style="background: rgba(59, 130, 246, 0.1); border: 1px solid rgba(59, 130, 246, 0.3); border-radius: 8px; padding: 1rem; color: #3b82f6;">
+                    <div style="display: flex; align-items: center; gap: 0.5rem;">
+                        <div style="animation: spin 1s linear infinite;">🔄</div>
+                        <span>Uploading ${file.name}...</span>
+                    </div>
+                </div>
+            `;
+            
+            try {
+                // Upload the image
+                const formData = new FormData();
+                formData.append('image', file);
+                
+                const uploadResponse = await fetch('/api/vision/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                if (!uploadResponse.ok) {
+                    throw new Error(`Upload failed: ${uploadResponse.statusText}`);
+                }
+                
+                const uploadResult = await uploadResponse.json();
+                console.log('✅ Upload successful:', uploadResult);
+                
+                // Store the analysis ID
+                currentAnalysisId = uploadResult.analysis_id;
+                
+                // Show success and analysis form
+                uploadStatus.innerHTML = `
+                    <div style="background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 8px; padding: 1rem; color: #10b981;">
+                        <div style="display: flex; align-items: center; gap: 0.5rem;">
+                            <span>✅</span>
+                            <span>Image uploaded successfully! Ready for analysis.</span>
+                        </div>
+                    </div>
+                `;
+                
+                // Show the analysis form
+                document.getElementById('analysis-form').style.display = 'block';
+                
+            } catch (error) {
+                console.error('❌ Upload error:', error);
+                uploadStatus.innerHTML = `
+                    <div style="background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 8px; padding: 1rem; color: #ef4444;">
+                        <div style="display: flex; align-items: center; gap: 0.5rem;">
+                            <span>❌</span>
+                            <span>Upload failed: ${error.message}</span>
+                        </div>
+                    </div>
+                `;
+            }
+        }
+
+        function handleModalUpload(event) {
+            const file = event.target.files[0];
+            if (file) {
+                console.log('Modal upload:', file.name);
+                handleImageUpload(event);
+            }
+        }
+
+        // ENHANCED AI ANALYSIS DISPLAY - PREMIUM VISUAL DESIGN WITH VISION TRADING
+        function displayAnalysisResults(analysis, symbol, timeframe) {
+            const confidence = Math.round((analysis.confidence || 0) * 100);
+            
+            console.log('🔍 Analysis object received:', analysis);
+            
+            // Get the raw AI analysis text directly
+            let rawAnalysisText = '';
+            if (analysis.analysis_notes && analysis.analysis_notes.trim().length > 0) {
+                rawAnalysisText = analysis.analysis_notes;
+                console.log('✅ Using raw AI analysis from analysis_notes');
+            } else if (analysis.primary_scenario && analysis.primary_scenario.notes && analysis.primary_scenario.notes.trim().length > 50) {
+                rawAnalysisText = analysis.primary_scenario.notes;
+                console.log('✅ Using raw AI analysis from primary_scenario.notes');
+            } else {
+                rawAnalysisText = "Raw AI analysis not available. The detailed ChatGPT-4 Vision analysis could not be retrieved.";
+                console.log('⚠️ No raw analysis text found');
+            }
+            
+            // VISION TRADING INTEGRATION - Save analysis for automated trading
+            if (rawAnalysisText && rawAnalysisText.trim().length > 100) {
+                currentAnalysisText = rawAnalysisText;
+                currentSymbol = symbol || 'XAUUSD';
+                
+                // Show vision trading buttons if analysis contains SMC elements
+                if (rawAnalysisText.includes('Entry Zone') || rawAnalysisText.includes('Stop Loss') || 
+                    rawAnalysisText.includes('Take Profit') || rawAnalysisText.includes('SMC') ||
+                    rawAnalysisText.includes('BOS') || rawAnalysisText.includes('CHoCH')) {
+                    console.log('✅ SMC analysis detected - enabling vision trading buttons');
+                    setTimeout(() => showVisionTradingButtons(), 1000); // Show after content loads
+                } else {
+                    console.log('⚠️ No SMC elements detected in analysis');
+                    hideVisionTradingButtons();
+                }
+            } else {
+                hideVisionTradingButtons();
+            }
+            
+            // Update the main AI insight panel with enhanced analysis display
+            const visionInsightElement = document.getElementById('vision-ai-insight');
+            if (visionInsightElement) {
+                // Create premium analysis display with enhanced visual hierarchy
+                const analysisHtml = `
+                    <!-- Analysis Header with Enhanced Styling -->
+                    <div style="background: linear-gradient(135deg, rgba(59, 130, 246, 0.15), rgba(139, 92, 246, 0.1)); 
+                                border: 1px solid rgba(59, 130, 246, 0.3); border-radius: 12px; padding: 1.25rem; 
+                                margin-bottom: 1.5rem; box-shadow: 0 4px 12px rgba(59, 130, 246, 0.1);">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                            <div style="display: flex; align-items: center; gap: 0.75rem;">
+                                <div style="font-size: 1.5rem;">📊</div>
+                                <div>
+                                    <div style="font-weight: 700; color: #3b82f6; font-size: 1.3rem; margin-bottom: 0.25rem;">
+                                        ${symbol || "UNKNOWN"} • ${timeframe || "N/A"}
+                                    </div>
+                                    <div style="color: #94a3b8; font-size: 0.9rem; font-weight: 500;">
+                                        Technical Analysis Complete
+                                    </div>
+                                </div>
+                            </div>
+                            <div style="background: linear-gradient(135deg, rgba(16, 185, 129, 0.2), rgba(34, 197, 94, 0.15)); 
+                                        color: #10b981; padding: 0.5rem 1rem; border-radius: 25px; font-size: 0.9rem; 
+                                        font-weight: 700; border: 1px solid rgba(16, 185, 129, 0.3); 
+                                        box-shadow: 0 2px 8px rgba(16, 185, 129, 0.2);">
+                                ✅ ${confidence}% Confidence
+                            </div>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 0.5rem; color: #cbd5e1; font-size: 0.85rem;">
+                            <span>🕒</span>
+                            <span>Analysis completed: ${new Date().toLocaleString()}</span>
+                            <span style="margin-left: auto; color: #8b5cf6; font-weight: 600;">• ChatGPT-4 Vision</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Main Analysis Content with Premium Styling -->
+                    <div style="background: linear-gradient(135deg, rgba(15, 23, 42, 0.8), rgba(30, 41, 59, 0.6)); 
+                                border-radius: 12px; padding: 2rem; border: 1px solid #475569; 
+                                box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1), 0 4px 12px rgba(0, 0, 0, 0.1);">
+                        
+                        <!-- Analysis Text -->
+                        <div style="color: #f1f5f9; line-height: 1.8; white-space: pre-wrap; font-size: 1rem; 
+                                    font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;">
+                            ${rawAnalysisText}
+                        </div>
+                    </div>
+                    
+                    <!-- Enhanced Footer with Call-to-Action -->
+                    <div style="margin-top: 1.5rem; padding: 1.25rem; 
+                                background: linear-gradient(135deg, rgba(139, 92, 246, 0.1), rgba(59, 130, 246, 0.08)); 
+                                border-radius: 12px; border: 1px solid rgba(139, 92, 246, 0.3);
+                                box-shadow: 0 4px 12px rgba(139, 92, 246, 0.1);">
+                        <div style="display: flex; align-items: center; justify-content: center; gap: 1rem;">
+                            <div style="font-size: 1.2rem;">🧠</div>
+                            <div style="text-align: center;">
+                                <div style="font-size: 0.95rem; color: #8b5cf6; font-weight: 700; margin-bottom: 0.25rem;">
+                                    AI Analysis • Professional Trading Insights
+                                </div>
+                                <div style="font-size: 0.8rem; color: #94a3b8; font-weight: 500;">
+                                    Smart Money Concepts • Institutional Order Flow • Market Structure Analysis
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Action Buttons -->
+                    <div style="margin-top: 1.5rem; display: flex; gap: 1rem; justify-content: center;">
+                        <button onclick="window.print()" 
+                                style="padding: 0.75rem 1.5rem; background: rgba(59, 130, 246, 0.1); color: #3b82f6; 
+                                       border: 1px solid rgba(59, 130, 246, 0.3); border-radius: 8px; font-weight: 600; 
+                                       cursor: pointer; transition: all 0.3s ease; font-size: 0.9rem;"
+                                onmouseover="this.style.background='rgba(59, 130, 246, 0.2)'"
+                                onmouseout="this.style.background='rgba(59, 130, 246, 0.1)'">
+                            📄 Save Analysis
+                        </button>
+                        <button onclick="document.getElementById('chart-image-upload').click()" 
+                                style="padding: 0.75rem 1.5rem; background: rgba(139, 92, 246, 0.1); color: #8b5cf6; 
+                                       border: 1px solid rgba(139, 92, 246, 0.3); border-radius: 8px; font-weight: 600; 
+                                       cursor: pointer; transition: all 0.3s ease; font-size: 0.9rem;"
+                                onmouseover="this.style.background='rgba(139, 92, 246, 0.2)'"
+                                onmouseout="this.style.background='rgba(139, 92, 246, 0.1)'">
+                            📊 Analyze New Chart
+                        </button>
+                    </div>
+                    
+                    <!-- Vision Trading Buttons (shown when analysis is available) -->
+                    <div id="vision-trading-buttons" style="margin-top: 1rem; display: none; justify-content: center; gap: 0.75rem; flex-wrap: wrap;">
+                        <button onclick="createVisionTradePreview()" 
+                                style="padding: 0.5rem 1rem; background: rgba(251, 191, 36, 0.1); color: #f59e0b; 
+                                       border: 1px solid rgba(251, 191, 36, 0.3); border-radius: 6px; font-weight: 600; 
+                                       cursor: pointer; transition: all 0.3s ease; font-size: 0.85rem;"
+                                onmouseover="this.style.background='rgba(251, 191, 36, 0.2)'"
+                                onmouseout="this.style.background='rgba(251, 191, 36, 0.1)'">
+                            📊 Preview Trade
+                        </button>
+                        <button onclick="createVisionTrade(false)" 
+                                style="padding: 0.5rem 1rem; background: rgba(34, 197, 94, 0.1); color: #22c55e; 
+                                       border: 1px solid rgba(34, 197, 94, 0.3); border-radius: 6px; font-weight: 600; 
+                                       cursor: pointer; transition: all 0.3s ease; font-size: 0.85rem;"
+                                onmouseover="this.style.background='rgba(34, 197, 94, 0.2)'"
+                                onmouseout="this.style.background='rgba(34, 197, 94, 0.1)'">
+                            🎯 Create Trade
+                        </button>
+                        <button onclick="createVisionTrade(true)" 
+                                style="padding: 0.5rem 1rem; background: rgba(239, 68, 68, 0.1); color: #ef4444; 
+                                       border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 6px; font-weight: 600; 
+                                       cursor: pointer; transition: all 0.3s ease; font-size: 0.85rem;"
+                                onmouseover="this.style.background='rgba(239, 68, 68, 0.2)'"
+                                onmouseout="this.style.background='rgba(239, 68, 68, 0.1)'">
+                            🚀 Auto Trade
+                        </button>
+                        <button onclick="showVisionTradingSettings()" 
+                                style="padding: 0.5rem 1rem; background: rgba(107, 114, 128, 0.1); color: #6b7280; 
+                                       border: 1px solid rgba(107, 114, 128, 0.3); border-radius: 6px; font-weight: 600; 
+                                       cursor: pointer; transition: all 0.3s ease; font-size: 0.85rem;"
+                                onmouseover="this.style.background='rgba(107, 114, 128, 0.2)'"
+                                onmouseout="this.style.background='rgba(107, 114, 128, 0.1)'">
+                            ⚙️ Settings
+                        </button>
+                    </div>
+                `;
+                
+                visionInsightElement.innerHTML = analysisHtml;
+                console.log('✅ Updated enhanced AI analysis panel with premium styling');
+                
+                // Smooth scroll to the analysis panel with better timing
+                setTimeout(() => {
+                    visionInsightElement.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                }, 300);
+            }
+        }
+
+
+
+        function buildFullAnalysisText(analysis, symbol, timeframe) {
+            const primaryScenario = analysis.primary_scenario || {};
+            const signal = primaryScenario.trade_type || 'NEUTRAL';
+            const confidence = Math.round((analysis.confidence || 0) * 100);
+            
+            let analysisText = `
+                <div class="analysis-section">
+                    <div class="section-header">🔍 Structure Analysis – ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}, ${new Date().toLocaleTimeString('en-US', { timeZone: 'UTC', hour12: false })} UTC</div>
+                    
+                    <div class="analysis-paragraph">
+                        <strong>🧭 Order Flow Analysis:</strong><br>
+                        ${analysis.market_structure_notes || 'Market structure analysis indicates current trend direction with key structural levels identified.'}
+                        ${analysis.overall_trend ? `Current trend bias is <span class="highlight">${analysis.overall_trend.toUpperCase()}</span> with ${analysis.trend_strength || 'moderate'} momentum.` : ''}
+                </div>
+                        </div>
+                        
+                <div class="analysis-section">
+                    <div class="section-header">⚠️ Key Observations</div>
+                    <div class="analysis-paragraph">
+                        ${analysis.key_observations && analysis.key_observations.length > 0 ? 
+                            analysis.key_observations.map(obs => `• ${obs}`).join('<br>') :
+                            `• Price action showing ${signal.toLowerCase()} bias on ${timeframe} timeframe<br>
+                             • Market structure suggests ${analysis.overall_trend || 'neutral'} continuation<br>
+                             • Key levels identified for potential entries and exits`
+                        }
+                    </div>
+                        </div>
+                        
+                <div class="analysis-section">
+                    <div class="section-header">🧭 Directional Bias</div>
+                    <div class="analysis-paragraph">
+                        📉 <strong>Higher Timeframe:</strong> ${analysis.market_bias || `${analysis.overall_trend || 'Neutral'} bias maintained with key structural levels holding`}<br><br>
+                        📈 <strong>Lower Timeframe:</strong> ${primaryScenario.scenario_name || 'Current setup showing potential for price continuation'}
+                    </div>
+                        </div>
+                        
+                <div class="analysis-section">
+                    <div class="section-header">⚔️ Trade Idea: ${primaryScenario.scenario_name || 'Primary Setup'}</div>
+                    <div class="analysis-paragraph">
+                        <strong>🔴 Scenario:</strong> <span class="trade-action">${signal} Setup</span><br><br>
+                        
+                        <strong>Entry Zone:</strong><br>
+                        🔺 <span class="price-level">${primaryScenario.entry_zone || primaryScenario.entry_price || 'Market Price'}</span><br>
+                        ${primaryScenario.entry_reasoning ? `→ ${primaryScenario.entry_reasoning}` : '→ Based on key technical confluence and market structure'}<br><br>
+                        
+                        <strong>Confirmation:</strong><br>
+                        ${primaryScenario.confirmation_signals && primaryScenario.confirmation_signals.length > 0 ?
+                            primaryScenario.confirmation_signals.map(signal => `• ${signal}`).join('<br>') :
+                            `• Price action confirmation at key levels<br>
+                             • Momentum alignment with directional bias<br>
+                             • Volume/volatility supporting the move`
+                        }<br><br>
+                        
+                        <strong>Stop Loss:</strong><br>
+                        📍 <span class="price-level">${primaryScenario.stop_loss || 'Risk management level'}</span> ${primaryScenario.stop_reasoning ? `(${primaryScenario.stop_reasoning})` : '(Structure invalidation)'}<br><br>
+                        
+                        <strong>Take Profits:</strong><br>
+                        ${formatTakeProfits(primaryScenario)}<br>
+                        
+                        <strong>Success Probability:</strong> <span class="highlight">${Math.round((primaryScenario.probability_success || 0.7) * 100)}%</span>
+                    </div>
+                        </div>
+                        
+                ${analysis.alternative_scenario ? `
+                <div class="analysis-section">
+                    <div class="section-header">🔄 Alternative Scenario</div>
+                    <div class="analysis-paragraph">
+                        <strong>Setup:</strong> ${analysis.alternative_scenario.scenario_name || 'Alternative trade setup'}<br>
+                        <strong>Direction:</strong> <span class="trade-action">${analysis.alternative_scenario.trade_type}</span><br>
+                        <strong>Entry:</strong> <span class="price-level">${analysis.alternative_scenario.entry_zone || analysis.alternative_scenario.entry_price}</span><br>
+                        <strong>Stop:</strong> <span class="price-level">${analysis.alternative_scenario.stop_loss}</span><br>
+                        <strong>Probability:</strong> <span class="highlight">${Math.round((analysis.alternative_scenario.probability_success || 0) * 100)}%</span>
+                    </div>
+                        </div>` : ''}
+                        
+                ${(analysis.support_levels && analysis.support_levels.length > 0) || (analysis.resistance_levels && analysis.resistance_levels.length > 0) ? `
+                <div class="analysis-section">
+                    <div class="section-header">📊 Key Levels</div>
+                    <div class="analysis-paragraph">
+                        ${analysis.resistance_levels && analysis.resistance_levels.length > 0 ? `
+                            <strong>🔴 Resistance/Supply Zones:</strong><br>
+                            ${analysis.resistance_levels.map(level => 
+                                `• <span class="price-level">${level.price}</span> - ${level.context} (${level.strength} strength)`
+                            ).join('<br>')}<br><br>
+                        ` : ''}
+                        
+                        ${analysis.support_levels && analysis.support_levels.length > 0 ? `
+                            <strong>🟢 Support/Demand Zones:</strong><br>
+                            ${analysis.support_levels.map(level => 
+                                `• <span class="price-level">${level.price}</span> - ${level.context} (${level.strength} strength)`
+                            ).join('<br>')}<br><br>
+                        ` : ''}
+                    </div>
+                </div>` : ''}
+
+                ${analysis.risk_factors && analysis.risk_factors.length > 0 ? `
+                <div class="analysis-section">
+                    <div class="section-header">⚠️ Risk Assessment</div>
+                    <div class="analysis-paragraph">
+                        <strong>Risk Factors:</strong><br>
+                        ${analysis.risk_factors.map(risk => `• <span class="risk-warning">${risk}</span>`).join('<br>')}<br><br>
+                        
+                        ${analysis.confluence_factors && analysis.confluence_factors.length > 0 ? `
+                            <strong>Confluence Factors:</strong><br>
+                            ${analysis.confluence_factors.map(factor => `• <span class="highlight">${factor}</span>`).join('<br>')}<br><br>
+                        ` : ''}
+                        
+                        <strong>Overall Confidence:</strong> <span class="highlight">${confidence}%</span> - ${getConfidenceDescription(confidence)}
+                    </div>
+                    </div>` : ''}
+
+                ${analysis.invalidation_conditions ? `
+                <div class="analysis-section">
+                    <div class="section-header">❌ Invalidation Conditions</div>
+                    <div class="analysis-paragraph">
+                        ${analysis.invalidation_conditions.bearish_bias_invalid ? 
+                            `<strong>Bearish Bias Invalid:</strong> <span class="risk-warning">${analysis.invalidation_conditions.bearish_bias_invalid}</span><br>` : ''}
+                        ${analysis.invalidation_conditions.bullish_bias_invalid ? 
+                            `<strong>Bullish Bias Invalid:</strong> <span class="risk-warning">${analysis.invalidation_conditions.bullish_bias_invalid}</span><br>` : ''}
+                </div>
+                </div>` : ''}
+            `;
+            
+            return analysisText;
+        }
+
+        function formatTakeProfits(scenario) {
+            if (scenario.take_profits && scenario.take_profits.length > 0) {
+                return scenario.take_profits.map((tp, index) => {
+                    const price = tp.tp1 || tp.tp2 || tp;
+                    const reasoning = tp.reasoning || '';
+                    return `TP${index + 1}: <span class="price-level">${price}</span> ${reasoning ? `(${reasoning})` : ''}`;
+                }).join('<br>');
+            } else if (scenario.take_profit_1) {
+                let tps = `TP1: <span class="price-level">${scenario.take_profit_1}</span>`;
+                if (scenario.take_profit_2) {
+                    tps += `<br>TP2: <span class="price-level">${scenario.take_profit_2}</span>`;
+                }
+                return tps;
+            }
+            return 'Target levels based on key resistance/support zones';
+        }
+
+        function getConfidenceDescription(confidence) {
+            if (confidence >= 80) return 'High confidence setup with strong confluence';
+            if (confidence >= 60) return 'Moderate confidence with reasonable risk/reward';
+            return 'Lower confidence - consider reducing position size';
+        }
+
+        function formatAnalysisText(text) {
+            // Handle raw AI text from OpenAI
+            if (typeof text === 'string') {
+                console.log('📝 Formatting analysis text length:', text.length);
+                
+                // If it looks like structured JSON text, try to format it better
+                if (text.includes('Structure Analysis') || text.includes('Order Flow') || text.includes('Trade Idea')) {
+                    // This is likely raw AI analysis - format it with basic structure
+                    return text
+                        .replace(/\n\n/g, '</p><p style="margin: 1.5rem 0;">')
+                        .replace(/\n/g, '<br>')
+                        .replace(/🔍 ([^:]+):/g, '<div class="section-header">🔍 $1</div>')
+                        .replace(/🧭 ([^:]+):/g, '<div class="section-header">🧭 $1</div>')
+                        .replace(/⚔️ ([^:]+):/g, '<div class="section-header">⚔️ $1</div>')
+                        .replace(/⚠️ ([^:]+):/g, '<div class="section-header">⚠️ $1</div>')
+                        .replace(/📊 ([^:]+):/g, '<div class="section-header">📊 $1</div>')
+                        .replace(/❌ ([^:]+):/g, '<div class="section-header">❌ $1</div>')
+                        .replace(/(\d+\.\d+)/g, '<span class="price-level">$1</span>')
+                        .replace(/(BUY|SELL|BULLISH|BEARISH)/gi, '<span class="trade-action">$1</span>')
+                        .replace(/(Entry|Stop Loss|Take Profit|TP\d+)/gi, '<strong style="color: #3b82f6;">$1</strong>');
+                } else {
+                    // Regular text formatting
+                    return text
+                        .replace(/\n\n/g, '</p><p style="margin: 1.5rem 0;">')
+                        .replace(/\n/g, '<br>');
+                }
+            }
+            
+            // If it's already HTML, return as-is
+            return text;
+        }
+
+        function displayQuickAnalysis() {
+            document.getElementById('recent-vision-analysis').innerHTML = `
+                <div style="background: rgba(51, 65, 85, 0.3); padding: 1rem; border-radius: 8px; margin-top: 1rem;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                        <span style="font-weight: 600;">EURUSD - H4</span>
+                        <span style="color: #10b981; font-size: 0.9rem;">85% Confidence</span>
+                    </div>
+                    <div style="color: #94a3b8; font-size: 0.9rem;">
+                        <div>📈 Signal: <span style="color: #10b981;">BUY</span></div>
+                        <div>🎯 Entry: 1.0850</div>
+                        <div>🛡️ Stop Loss: 1.0820</div>
+                        <div>💰 Take Profit: 1.0910</div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function updateEquityChart() {
+            const timeframe = document.getElementById('equity-timeframe').value;
+            console.log('🔄 Updating equity chart for timeframe:', timeframe);
+            
+            // Fetch equity history for the selected timeframe
+            fetch(`/api/trades/history?timeframe=${timeframe}`)
+                .then(response => response.json())
+                .then(data => {
+                    console.log('📊 Equity history received for', timeframe, ':', data);
+                    updateEquityChartData(data.history || []);
+                })
+                .catch(error => console.error('❌ Error fetching equity history:', error));
+        }
+
+        // FIXED: Update equity chart with better error handling
+        function updateEquityChartData(history) {
+            console.log('📊 Updating equity chart with', history.length, 'data points');
+            
+            if (!window.equityChart) {
+                console.log('⚠️ Chart not initialized, skipping chart update');
+                return;
+            }
+            
+            if (history.length === 0) {
+                console.log('⚠️ No equity history data available');
+                return;
+            }
+            
+            try {
+                const labels = history.map(point => {
+                    const date = new Date(point.timestamp);
+                    return date.toLocaleDateString();
+                });
+                
+                const data = history.map(point => point.equity || point.running_balance || 0);
+                
+                window.equityChart.data.labels = labels;
+                window.equityChart.data.datasets[0].data = data;
+                window.equityChart.update();
+                
+                console.log('✅ Equity chart updated with', data.length, 'points');
+            } catch (error) {
+                console.error('❌ Error updating equity chart:', error);
+            }
+        }
+
+        // === REDIS CACHE INTEGRATION & TIMEOUT HANDLING ===
+        // Configuration for timeout handling and retry logic
+        const API_TIMEOUT = 60000; // 60 seconds timeout for slow backend responses
+        const RETRY_DELAY = 5000;   // 5 seconds between retries
+        const MAX_RETRIES = 3;      // Maximum number of retry attempts
+        
+        // Global state management
+        let isUpdating = false;
+        let retryCount = 0;
+        let lastUpdateTime = 0;
+        
+        // Enhanced fetch with timeout and retry logic
+        async function fetchWithTimeout(url, options = {}) {
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), API_TIMEOUT);
+            
+            try {
+                showLoading(`Fetching ${url}...`);
+                const response = await fetch(url, { 
+                    ...options, 
+                    signal: controller.signal 
+                });
+                clearTimeout(timeoutId);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                hideLoading();
+                return response;
+            } catch (error) {
+                clearTimeout(timeoutId);
+                hideLoading();
+                
+                if (error.name === 'AbortError') {
+                    showError(`Request to ${url} timed out after ${API_TIMEOUT/1000}s`);
+                    throw new Error(`Timeout: ${url}`);
+                }
+                throw error;
+            }
+        }
+        
+        // Enhanced loading indicator
+        function showLoading(message) {
+            const indicator = document.getElementById('loading-indicator');
+            if (indicator) {
+                indicator.style.display = 'block';
+                indicator.textContent = message || 'Loading...';
+            }
+            console.log('⏳', message);
+        }
+        
+        function hideLoading() {
+            const indicator = document.getElementById('loading-indicator');
+            if (indicator) {
+                indicator.style.display = 'none';
+            }
+        }
+        
+        function showError(message) {
+            const errorDiv = document.getElementById('error-message');
+            if (errorDiv) {
+                errorDiv.textContent = message;
+                errorDiv.style.display = 'block';
+                setTimeout(() => {
+                    errorDiv.style.display = 'none';
+                }, 10000);
+            }
+            console.error('❌', message);
+        }
+        
+        // Real-time data updates with timeout handling and Redis cache optimization
+        async function updateDashboard() {
+            if (isUpdating) {
+                console.log('⏳ Dashboard update already in progress, skipping...');
+                return;
+            }
+            
+            isUpdating = true;
+            const startTime = Date.now();
+            console.log('🔄 Starting dashboard update with Redis cache optimization...');
+            
+            try {
+                // Fetch critical data with timeout handling
+                await fetchHealthData();
+                
+                // Fetch EA status with timeout handling
+                await fetchEAData();
+                
+                // Fetch trades with timeout handling
+                await fetchTradesData();
+                
+                // Fetch equity history with timeout handling
+                await fetchEquityHistory();
+                
+                // Fetch AI insights in background (non-blocking)
+                fetchAIInsights().catch(error => {
+                    console.log('⚠️ AI insights failed (non-critical):', error);
+                });
+                
+                // Update performance metrics
+                const duration = Date.now() - startTime;
+                lastUpdateTime = Date.now();
+                retryCount = 0; // Reset retry count on successful update
+                
+                console.log(`✅ Dashboard update completed in ${duration}ms`);
+                
+            } catch (error) {
+                console.error('❌ Dashboard update failed:', error);
+                
+                // Implement retry logic
+                if (retryCount < MAX_RETRIES) {
+                    retryCount++;
+                    console.log(`🔄 Retrying dashboard update (${retryCount}/${MAX_RETRIES}) in ${RETRY_DELAY}ms...`);
+                    showError(`Update failed. Retrying in ${RETRY_DELAY/1000}s... (${retryCount}/${MAX_RETRIES})`);
+                    setTimeout(() => updateDashboard(), RETRY_DELAY);
+                } else {
+                    showError('Dashboard update failed after multiple attempts. Please refresh the page.');
+                    retryCount = 0; // Reset for next attempt
+                }
+            } finally {
+                isUpdating = false;
+            }
+        }
+        
+        // Health data fetching with Redis cache optimization
+        async function fetchHealthData() {
+            try {
+                const response = await fetchWithTimeout('/api/health');
+                const data = await response.json();
+                
+                console.log('📊 Health data received:', data);
+                console.log('💰 Account Balance:', data.account_balance);
+                console.log('💎 Account Equity:', data.account_equity);
+                
+                // Log Redis cache performance
+                if (data.cache_performance) {
+                    console.log('🚀 Redis Cache Performance:', data.cache_performance);
+                }
+                
+                const balanceElement = document.getElementById('account-balance');
+                const equityElement = document.getElementById('account-equity');
+                const dailyPnlElement = document.getElementById('daily-pnl');
+                const totalTradesElement = document.getElementById('total-trades');
+                const openTradesElement = document.getElementById('open-trades');
+                const winRateElement = document.getElementById('win-rate');
+                
+                if (balanceElement) {
+                    const balance = data.account_balance || 0;
+                    balanceElement.textContent = `$${balance.toFixed(2)}`;
+                    console.log('📝 Setting balance to:', balance);
+                }
+                
+                if (equityElement) {
+                    const equity = data.account_equity || 0;
+                    equityElement.textContent = `$${equity.toFixed(2)}`;
+                    console.log('📝 Setting equity to:', equity);
+                }
+                
+                if (dailyPnlElement) {
+                    const pnl = data.daily_pnl || 0;
+                    dailyPnlElement.textContent = `$${pnl.toFixed(2)}`;
+                    dailyPnlElement.className = `metric-value ${pnl >= 0 ? 'positive' : 'negative'}`;
+                    console.log('📝 Setting daily P&L to:', pnl);
+                }
+                
+                if (totalTradesElement) {
+                    const totalTrades = data.total_trades || 0;
+                    totalTradesElement.textContent = totalTrades.toString();
+                    console.log('📝 Setting total trades to:', totalTrades);
+                }
+                
+                if (openTradesElement) {
+                    const openTrades = data.open_trades || 0;
+                    openTradesElement.textContent = openTrades.toString();
+                    console.log('📝 Setting open trades to:', openTrades);
+                }
+                
+                if (winRateElement) {
+                    const winRate = data.win_rate || 0;
+                    winRateElement.textContent = `${winRate.toFixed(1)}%`;
+                    console.log('📝 Setting win rate to:', winRate);
+                }
+                
+                // Update profit factor from backend health data
+                const profitFactorElement = document.getElementById('profit-factor');
+                if (profitFactorElement && data.profit_factor !== undefined) {
+                    profitFactorElement.textContent = data.profit_factor.toFixed(2);
+                    console.log('📝 Setting profit factor from health data to:', data.profit_factor);
+                }
+                
+            } catch (error) {
+                console.error('❌ Error fetching health data:', error);
+                showError('Failed to fetch health data');
+                throw error;
+            }
+        }
+        
+        // EA data fetching with Redis cache optimization
+        async function fetchEAData() {
+            try {
+                const response = await fetchWithTimeout('/api/eas');
+                const eas = await response.json();
+                
+                console.log('🤖 EA data received:', eas);
+                updateEAStatus(eas);
+                updateTradingStatistics(eas);
+                
+            } catch (error) {
+                console.error('❌ Error fetching EA data:', error);
+                showError('Failed to fetch EA data');
+                throw error;
+            }
+        }
+        
+        // Trades data fetching with Redis cache optimization
+        async function fetchTradesData() {
+            try {
+                const response = await fetchWithTimeout('/api/trades');
+                const trades = await response.json();
+                
+                console.log('📈 Trades data received:', trades);
+                updateTradesTable(trades);
+                
+            } catch (error) {
+                console.error('❌ Error fetching trades data:', error);
+                showError('Failed to fetch trades data');
+                throw error;
+            }
+        }
+        
+        // Equity history fetching with Redis cache optimization
+        async function fetchEquityHistory() {
+            try {
+                const timeframe = document.getElementById('equity-timeframe').value;
+                const response = await fetchWithTimeout(`/api/trades/history?timeframe=${timeframe}`);
+                const data = await response.json();
+                
+                console.log('📊 Equity history received for', timeframe, ':', data);
+                updateEquityChartData(data.history || []);
+                
+            } catch (error) {
+                console.error('❌ Error fetching equity history:', error);
+                showError('Failed to fetch equity history');
+                throw error;
+            }
+        }
+        
+        // AI insights fetching with Redis cache optimization
+        async function fetchAIInsights() {
+            try {
+                const response = await fetchWithTimeout('/api/ai/insights/all');
+                const data = await response.json();
+                
+                console.log('🤖 AI insights received:', data);
+                updateAIInsights(data);
+                
+            } catch (error) {
+                console.log('⚠️ AI insights not available:', error);
+                // Set fallback insights
+                updateAIInsights({
+                    success: false,
+                    insights: {
+                        market: 'Market monitoring active',
+                        account: 'Account monitoring active',
+                        performance: 'Performance tracking active'
+                    }
+                });
+            }
+        }
+
+        // Update AI insights in dashboard panels
+        function updateAIInsights(aiData) {
+            console.log('🤖 Updating AI insights...', aiData);
+            
+            try {
+                const insights = aiData.insights || {};
+                
+                // Update market insight (first ai-insight-content found)
+                const marketInsightElement = document.querySelector('.ai-insight-content');
+                if (marketInsightElement && insights.market) {
+                    marketInsightElement.textContent = insights.market;
+                    console.log('📝 Updated market insight');
+                }
+                
+                // Update account analysis
+                const accountInsightElement = document.getElementById('account-ai-insight');
+                if (accountInsightElement && insights.account) {
+                    accountInsightElement.textContent = insights.account;
+                    console.log('📝 Updated account insight');
+                }
+                
+                // Update performance analysis
+                const performanceInsightElement = document.getElementById('performance-ai-insight');
+                if (performanceInsightElement && insights.performance) {
+                    performanceInsightElement.textContent = insights.performance;
+                    console.log('📝 Updated performance insight');
+                }
+                
+                console.log('✅ AI insights update complete');
+            } catch (error) {
+                console.error('❌ Error updating AI insights:', error);
+            }
+        }
+
+        // Update trading statistics
+        function updateTradingStatistics(eas) {
+            console.log('📊 Updating trading statistics...');
+            
+            const activeEAsElement = document.getElementById('active-eas');
+            const profitFactorElement = document.getElementById('profit-factor');
+            
+            const activeEAs = eas.filter(ea => ea.status === 'active').length;
+            
+            if (activeEAsElement) {
+                activeEAsElement.textContent = activeEAs.toString();
+                console.log('📝 Setting active EAs to:', activeEAs);
+            }
+            
+            // Calculate profit factor from EAs using correct field names
+            const totalProfit = eas.reduce((sum, ea) => sum + (ea.total_profit || 0), 0);
+            const totalLoss = eas.reduce((sum, ea) => sum + (ea.total_loss || 0), 0);
+            const profitFactor = totalLoss > 0 ? (totalProfit / totalLoss) : 0;
+            
+            if (profitFactorElement) {
+                profitFactorElement.textContent = profitFactor.toFixed(2);
+                console.log('📝 Setting profit factor to:', profitFactor, 'from', totalProfit, '/', totalLoss);
+            }
+        }
+
+        // Update EA status cards
+        function updateEAStatus(eas) {
+            console.log('🤖 Updating EA status with', eas.length, 'EAs');
+            
+            const container = document.getElementById('ea-status-container');
+            if (!container) return;
+            
+            container.innerHTML = '';
+            
+            eas.slice(0, 6).forEach(ea => {
+                const card = document.createElement('div');
+                card.className = 'ea-status-card';
+                
+                const statusClass = ea.status === 'active' ? 'status-active' : 'status-inactive';
+                const profitClass = (ea.profit || 0) >= 0 ? 'profit-positive' : 'profit-negative';
+                
+                card.innerHTML = `
+                    <div class="ea-header">
+                        <span class="ea-name">${ea.name || 'Unknown EA'}</span>
+                        <span class="ea-status ${statusClass}">${ea.status || 'inactive'}</span>
+                    </div>
+                    <div class="ea-metrics">
+                        <div class="ea-metric">
+                            <span class="metric-label">Trades</span>
+                            <span class="metric-value">${ea.total_trades || 0}</span>
+                        </div>
+                        <div class="ea-metric">
+                            <span class="metric-label">Win Rate</span>
+                            <span class="metric-value">${(ea.win_rate || 0).toFixed(1)}%</span>
+                        </div>
+                        <div class="ea-metric">
+                            <span class="metric-label">Profit</span>
+                            <span class="metric-value ${profitClass}">$${(ea.profit || 0).toFixed(2)}</span>
+                        </div>
+                    </div>
+                `;
+                
+                container.appendChild(card);
+            });
+        }
+
+        // Update trades table
+        function updateTradesTable(trades) {
+            console.log('📈 Updating trades table with', trades.length, 'trades');
+            
+            const tbody = document.querySelector('#trades-table tbody');
+            if (!tbody) return;
+            
+            tbody.innerHTML = '';
+            
+            trades.slice(0, 10).forEach(trade => {
+                const row = document.createElement('tr');
+                const profitClass = (trade.profit || 0) >= 0 ? 'profit-positive' : 'profit-negative';
+                
+                row.innerHTML = `
+                    <td>${trade.symbol || 'N/A'}</td>
+                    <td><span class="trade-type-${(trade.type || 'buy').toLowerCase()}">${trade.type || 'N/A'}</span></td>
+                    <td>${(trade.volume || 0).toFixed(2)}</td>
+                    <td>${(trade.open_price || 0).toFixed(5)}</td>
+                    <td>${(trade.current_price || 0).toFixed(5)}</td>
+                    <td class="${profitClass}">$${(trade.profit || 0).toFixed(2)}</td>
+                `;
+                
+                tbody.appendChild(row);
+            });
+        }
+
+        // ========================================
+        // VISION TRADING FUNCTIONS  
+        // ========================================
+        
+        let currentAnalysisText = '';
+        let currentSymbol = 'XAUUSD';
+        
+        // Show vision trading buttons when analysis is complete
+        function showVisionTradingButtons() {
+            const buttonsDiv = document.getElementById('vision-trading-buttons');
+            if (buttonsDiv) {
+                buttonsDiv.style.display = 'flex';
+            }
+        }
+        
+        // Hide vision trading buttons
+        function hideVisionTradingButtons() {
+            const buttonsDiv = document.getElementById('vision-trading-buttons');
+            if (buttonsDiv) {
+                buttonsDiv.style.display = 'none';
+            }
+        }
+        
+        // Create vision trade preview
+        async function createVisionTradePreview() {
+            if (!currentAnalysisText) {
+                alert('No analysis available. Please analyze a chart first.');
+                return;
+            }
+            
+            try {
+                showLoading('Creating trade preview...');
+                
+                const response = await fetchWithTimeout('/api/vision-trading/process-analysis', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        analysis_text: currentAnalysisText,
+                        symbol: currentSymbol,
+                        auto_submit: false
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    showVisionTradePreview(result);
+                } else {
+                    showError(`Failed to create trade preview: ${result.message}`);
+                }
+                
+            } catch (error) {
+                console.error('Error creating vision trade preview:', error);
+                showError('Failed to create trade preview');
+            } finally {
+                hideLoading();
+            }
+        }
+        
+        // Create actual vision trade
+        async function createVisionTrade(autoSubmit = false) {
+            if (!currentAnalysisText) {
+                alert('No analysis available. Please analyze a chart first.');
+                return;
+            }
+            
+            const confirmMessage = autoSubmit ? 
+                'Create and automatically submit this trade for execution?' :
+                'Create this trade for manual review?';
+                
+            if (!confirm(confirmMessage)) {
+                return;
+            }
+            
+            try {
+                showLoading(autoSubmit ? 'Creating and submitting trade...' : 'Creating trade...');
+                
+                const response = await fetchWithTimeout('/api/vision-trading/process-analysis', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        analysis_text: currentAnalysisText,
+                        symbol: currentSymbol,
+                        auto_submit: autoSubmit
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    const message = autoSubmit ? 
+                        `Trade created and submitted! ID: ${result.trade_id}` :
+                        `Trade created successfully! ID: ${result.trade_id}`;
+                    alert(message);
+                    
+                    // Refresh dashboard to show new trade
+                    updateDashboard();
+                } else {
+                    showError(`Failed to create trade: ${result.message}`);
+                }
+                
+            } catch (error) {
+                console.error('Error creating vision trade:', error);
+                showError('Failed to create trade');
+            } finally {
+                hideLoading();
+            }
+        }
+        
+        // Show vision trade preview modal
+        function showVisionTradePreview(tradeData) {
+            const modal = document.createElement('div');
+            modal.style.cssText = `
+                position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+                background: rgba(0,0,0,0.7); z-index: 10000; display: flex; 
+                align-items: center; justify-content: center;
+            `;
+            
+            modal.innerHTML = `
+                <div style="background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); 
+                           border-radius: 16px; padding: 2rem; max-width: 500px; width: 90%; 
+                           border: 1px solid rgba(139, 92, 246, 0.3); box-shadow: 0 25px 50px rgba(0,0,0,0.5);">
+                    <h3 style="color: #8b5cf6; margin-bottom: 1.5rem; text-align: center; font-size: 1.5rem;">
+                        🎯 Vision Trade Preview
+                    </h3>
+                    
+                    <div style="space-y: 1rem;">
+                        <div style="display: flex; justify-content: space-between; padding: 0.5rem 0; border-bottom: 1px solid rgba(139, 92, 246, 0.2);">
+                            <span style="color: #94a3b8;">Symbol:</span>
+                            <span style="color: #e2e8f0; font-weight: 600;">${tradeData.symbol}</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; padding: 0.5rem 0; border-bottom: 1px solid rgba(139, 92, 246, 0.2);">
+                            <span style="color: #94a3b8;">Direction:</span>
+                            <span style="color: ${tradeData.direction === 'BUY' ? '#22c55e' : '#ef4444'}; font-weight: 600;">${tradeData.direction}</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; padding: 0.5rem 0; border-bottom: 1px solid rgba(139, 92, 246, 0.2);">
+                            <span style="color: #94a3b8;">Entry Zone:</span>
+                            <span style="color: #e2e8f0; font-weight: 600;">${tradeData.entry_zone}</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; padding: 0.5rem 0; border-bottom: 1px solid rgba(139, 92, 246, 0.2);">
+                            <span style="color: #94a3b8;">Stop Loss:</span>
+                            <span style="color: #ef4444; font-weight: 600;">${tradeData.stop_loss}</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; padding: 0.5rem 0; border-bottom: 1px solid rgba(139, 92, 246, 0.2);">
+                            <span style="color: #94a3b8;">Take Profit 1:</span>
+                            <span style="color: #22c55e; font-weight: 600;">${tradeData.take_profits.tp1}</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; padding: 0.5rem 0; border-bottom: 1px solid rgba(139, 92, 246, 0.2);">
+                            <span style="color: #94a3b8;">Lot Size:</span>
+                            <span style="color: #e2e8f0; font-weight: 600;">${tradeData.lot_size}</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; padding: 0.5rem 0; border-bottom: 1px solid rgba(139, 92, 246, 0.2);">
+                            <span style="color: #94a3b8;">Confidence:</span>
+                            <span style="color: #f59e0b; font-weight: 600;">${(tradeData.confidence * 100).toFixed(1)}%</span>
+                        </div>
+                    </div>
+                    
+                    <div style="display: flex; gap: 1rem; margin-top: 2rem; justify-content: center;">
+                        <button onclick="document.body.removeChild(this.closest('.modal-overlay'))" 
+                                style="padding: 0.75rem 1.5rem; background: rgba(107, 114, 128, 0.2); color: #94a3b8; 
+                                       border: 1px solid rgba(107, 114, 128, 0.3); border-radius: 8px; cursor: pointer;">
+                            Cancel
+                        </button>
+                        <button onclick="document.body.removeChild(this.closest('.modal-overlay')); createVisionTrade(false);" 
+                                style="padding: 0.75rem 1.5rem; background: rgba(34, 197, 94, 0.2); color: #22c55e; 
+                                       border: 1px solid rgba(34, 197, 94, 0.3); border-radius: 8px; cursor: pointer;">
+                            Create Trade
+                        </button>
+                        <button onclick="document.body.removeChild(this.closest('.modal-overlay')); createVisionTrade(true);" 
+                                style="padding: 0.75rem 1.5rem; background: rgba(239, 68, 68, 0.2); color: #ef4444; 
+                                       border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 8px; cursor: pointer;">
+                            Auto Submit
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            modal.className = 'modal-overlay';
+            document.body.appendChild(modal);
+        }
+        
+        // Show vision trading settings
+        async function showVisionTradingSettings() {
+            try {
+                const response = await fetchWithTimeout('/api/vision-trading/config');
+                const config = await response.json();
+                
+                const modal = document.createElement('div');
+                modal.style.cssText = `
+                    position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+                    background: rgba(0,0,0,0.7); z-index: 10000; display: flex; 
+                    align-items: center; justify-content: center;
+                `;
+                
+                modal.innerHTML = `
+                    <div style="background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); 
+                               border-radius: 16px; padding: 2rem; max-width: 400px; width: 90%; 
+                               border: 1px solid rgba(139, 92, 246, 0.3);">
+                        <h3 style="color: #8b5cf6; margin-bottom: 1.5rem; text-align: center;">
+                            ⚙️ Vision Trading Settings
+                        </h3>
+                        
+                        <form id="vision-settings-form">
+                            <div style="margin-bottom: 1rem;">
+                                <label style="color: #94a3b8; display: block; margin-bottom: 0.5rem;">Risk Percentage:</label>
+                                <input type="number" step="0.1" value="${config.risk_percentage}" 
+                                       name="risk_percentage" style="width: 100%; padding: 0.5rem; border-radius: 6px; 
+                                       background: rgba(51, 65, 85, 0.8); border: 1px solid rgba(139, 92, 246, 0.3); color: #e2e8f0;">
+                            </div>
+                            <div style="margin-bottom: 1rem;">
+                                <label style="color: #94a3b8; display: block; margin-bottom: 0.5rem;">Min Confidence:</label>
+                                <input type="number" step="0.1" min="0" max="1" value="${config.min_confidence}" 
+                                       name="min_confidence" style="width: 100%; padding: 0.5rem; border-radius: 6px; 
+                                       background: rgba(51, 65, 85, 0.8); border: 1px solid rgba(139, 92, 246, 0.3); color: #e2e8f0;">
+                            </div>
+                            <div style="margin-bottom: 1rem;">
+                                <label style="color: #94a3b8; display: block; margin-bottom: 0.5rem;">Max Vision Trades:</label>
+                                <input type="number" min="1" max="10" value="${config.max_vision_trades}" 
+                                       name="max_vision_trades" style="width: 100%; padding: 0.5rem; border-radius: 6px; 
+                                       background: rgba(51, 65, 85, 0.8); border: 1px solid rgba(139, 92, 246, 0.3); color: #e2e8f0;">
+                            </div>
+                            <div style="margin-bottom: 1rem;">
+                                <label style="color: #94a3b8; display: block; margin-bottom: 0.5rem;">Default Lot Size:</label>
+                                <input type="number" step="0.01" min="0.01" value="${config.default_lot_size}" 
+                                       name="default_lot_size" style="width: 100%; padding: 0.5rem; border-radius: 6px; 
+                                       background: rgba(51, 65, 85, 0.8); border: 1px solid rgba(139, 92, 246, 0.3); color: #e2e8f0;">
+                            </div>
+                        </form>
+                        
+                        <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
+                            <button onclick="document.body.removeChild(this.closest('.modal-overlay'))" 
+                                    style="flex: 1; padding: 0.75rem; background: rgba(107, 114, 128, 0.2); color: #94a3b8; 
+                                           border: 1px solid rgba(107, 114, 128, 0.3); border-radius: 8px; cursor: pointer;">
+                                Cancel
+                            </button>
+                            <button onclick="saveVisionTradingSettings()" 
+                                    style="flex: 1; padding: 0.75rem; background: rgba(34, 197, 94, 0.2); color: #22c55e; 
+                                           border: 1px solid rgba(34, 197, 94, 0.3); border-radius: 8px; cursor: pointer;">
+                                Save Settings
+                            </button>
+                        </div>
+                    </div>
+                `;
+                
+                modal.className = 'modal-overlay';
+                document.body.appendChild(modal);
+                
+            } catch (error) {
+                console.error('Error loading vision trading settings:', error);
+                showError('Failed to load settings');
+            }
+        }
+        
+        // Save vision trading settings
+        async function saveVisionTradingSettings() {
+            try {
+                const form = document.getElementById('vision-settings-form');
+                const formData = new FormData(form);
+                const settings = {};
+                
+                for (let [key, value] of formData.entries()) {
+                    settings[key] = parseFloat(value);
+                }
+                
+                const response = await fetchWithTimeout('/api/vision-trading/config', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(settings)
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    alert('Settings saved successfully!');
+                    document.body.removeChild(document.querySelector('.modal-overlay'));
+                } else {
+                    showError('Failed to save settings');
+                }
+                
+            } catch (error) {
+                console.error('Error saving vision trading settings:', error);
+                showError('Failed to save settings');
+            }
+        }
+
+        // FIXED: Initialize with proper error handling
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🎯 DOM Content Loaded - Initializing dashboard...');
+            
+            try {
+                // Initialize charts first (with error handling)
+                initializeCharts();
+                console.log('✅ Charts initialization completed');
+            } catch (error) {
+                console.error('❌ Charts initialization failed:', error);
+                console.log('⚠️ Continuing without charts...');
+            }
+            
+            try {
+                // Initialize vision analysis
+                initializeVisionAnalysis();
+                console.log('✅ Vision analysis initialization completed');
+            } catch (error) {
+                console.error('❌ Vision analysis initialization failed:', error);
+            }
+            
+            // Load initial data immediately
+            console.log('📡 Loading initial data...');
+            try {
+                updateDashboard();
+                console.log('✅ Initial data load completed');
+            } catch (error) {
+                console.error('❌ Initial data load failed:', error);
+            }
+            
+            // Set up periodic updates every 10 seconds
+            console.log('⏰ Setting up periodic updates...');
+            setInterval(function() {
+                try {
+                    updateDashboard();
+                } catch (error) {
+                    console.error('❌ Periodic update failed:', error);
+                }
+            }, 10000);
+            
+            // Set up real-time updates via WebSocket
+            if (typeof io !== 'undefined') {
+                console.log('🔌 Setting up WebSocket connection...');
+                try {
+                    const socket = io();
+                    socket.on('trade_update', function(data) {
+                        console.log('📈 Trade update received via WebSocket');
+                        updateDashboard();
+                    });
+                    socket.on('ea_update', function(data) {
+                        console.log('🤖 EA update received via WebSocket');
+                        updateDashboard();
+                    });
+                } catch (error) {
+                    console.error('❌ WebSocket setup failed:', error);
+                }
+            } else {
+                console.log('⚠️ Socket.IO not available');
+            }
+            
+            // Add a global function for manual testing
+            window.forceUpdate = forceUpdate;
+            console.log('✅ Dashboard initialization complete');
+        });
+
+        // FIXED: Chart initialization with proper error handling
+        function initializeCharts() {
+            console.log('📊 Initializing charts...');
+            
+            try {
+                // Check if chart already exists and destroy it
+                if (window.equityChart) {
+                    window.equityChart.destroy();
+                    window.equityChart = null;
+                    console.log('🗑️ Destroyed existing chart');
+                }
+                
+                // Try to find existing Chart.js instance and destroy it
+                const existingChart = Chart.getChart('equity-chart');
+                if (existingChart) {
+                    existingChart.destroy();
+                    console.log('🗑️ Destroyed existing Chart.js instance');
+                }
+            } catch (e) {
+                console.log('ℹ️ No existing chart to destroy');
+            }
+            
+            // Initialize equity chart with the correct ID
+            const equityCtx = document.getElementById('equity-chart');
+            if (!equityCtx) {
+                console.error('❌ Equity chart canvas not found');
+                return;
+            }
+            
+            try {
+                window.equityChart = new Chart(equityCtx, {
+                    type: 'line',
+                    data: {
+                        labels: [],
+                        datasets: [{
+                            label: 'Account Equity',
+                            data: [],
+                            borderColor: '#10b981',
+                            backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                            tension: 0.4,
+                            fill: true
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: {
+                                beginAtZero: false,
+                                grid: {
+                                    color: 'rgba(148, 163, 184, 0.1)'
+                                },
+                                ticks: {
+                                    color: '#94a3b8',
+                                    callback: function(value) {
+                                        return '$' + value.toFixed(2);
+                                    }
+                                }
+                            },
+                            x: {
+                                grid: {
+                                    color: 'rgba(148, 163, 184, 0.1)'
+                                },
+                                ticks: {
+                                    color: '#94a3b8'
+                                }
+                            }
+                        },
+                        plugins: {
+                            legend: {
+                                display: false
+                            }
+                        }
+                    }
+                });
+                console.log('✅ Equity chart initialized successfully');
+            } catch (error) {
+                console.error('❌ Chart initialization error:', error);
+                console.log('⚠️ Continuing without chart - dashboard data will still work');
+                // Continue without chart - don't let this break the rest of the dashboard
+            }
+        }
+
+        // Vision analysis initialization
+        function initializeVisionAnalysis() {
+            console.log('🔍 Initializing vision analysis...');
+            // Load the most recent vision analysis
+            loadLatestVisionAnalysis();
+            console.log('✅ Vision analysis initialized');
+        }
+        
+        // Load the latest vision analysis for the AI insight panel
+        async function loadLatestVisionAnalysis() {
+            try {
+                const response = await fetch('/api/vision/latest');
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.analysis && data.analysis.analysis_notes) {
+                        const analysis = data.analysis;
+                        const rawText = analysis.analysis_notes;
+                        
+                        // Create summary for insight panel
+                        const sentences = rawText.split(/[.!?]+/).filter(s => s.trim().length > 10);
+                        const summary = sentences.slice(0, 3).join('. ').trim();
+                        const displayText = summary || rawText.substring(0, 200) + '...';
+                        
+                        const visionInsightElement = document.getElementById('vision-ai-insight');
+                        if (visionInsightElement) {
+                            visionInsightElement.innerHTML = `<strong>${analysis.symbol} ${analysis.timeframe}:</strong> ${displayText}`;
+                            console.log('✅ Loaded latest vision analysis');
+                        }
+                    }
+                }
+            } catch (error) {
+                console.log('ℹ️ No recent vision analysis available:', error.message);
+            }
+        }
+
+        // Force immediate data update (for testing)
+        function forceUpdate() {
+            console.log('🚀 Force update triggered!');
+            updateDashboard();
+        }
+
+        // Enhanced analyzeChart function with consolidated panel display
+        async function analyzeChart() {
+            if (!currentAnalysisId) {
+                alert('Please upload a chart image first!');
+                return;
+            }
+            
+            const symbolSelect = document.getElementById('symbol-select');
+            const timeframeSelect = document.getElementById('timeframe-select');
+            const visionInsightElement = document.getElementById('vision-ai-insight');
+            
+            if (!symbolSelect || !timeframeSelect) {
+                console.error('Required form elements not found');
+                return;
+            }
+            
+            const symbol = symbolSelect.value.trim();
+            const timeframe = timeframeSelect.value;
+            
+            if (!symbol || !timeframe) {
+                alert('Please enter a symbol and select a timeframe!');
+                return;
+            }
+            
+            console.log('🧠 Starting AI analysis for:', currentAnalysisId, symbol, timeframe);
+            
+            // Show loading state in the main AI panel
+            if (visionInsightElement) {
+                visionInsightElement.innerHTML = `
+                    <div style="text-align: center; padding: 3rem;">
+                        <div style="font-size: 3rem; margin-bottom: 1rem; animation: spin 2s linear infinite;">🧠</div>
+                        <div style="color: #3b82f6; font-size: 1.2rem; font-weight: 600; margin-bottom: 0.5rem;">
+                            Analyzing ${symbol} ${timeframe} Chart...
+                        </div>
+                        <div style="color: #94a3b8; font-size: 0.9rem; margin-bottom: 1rem;">
+                            AI is processing your chart with Smart Money Concepts
+                        </div>
+                        <div style="margin-top: 1rem; height: 4px; background: rgba(59, 130, 246, 0.2); border-radius: 2px; overflow: hidden; width: 200px; margin: 1rem auto;">
+                            <div style="height: 100%; background: linear-gradient(90deg, #3b82f6, #8b5cf6); border-radius: 2px; animation: loading 2s ease-in-out infinite;"></div>
+                        </div>
+                    </div>
+                    
+                    <style>
+                        @keyframes spin {
+                            from { transform: rotate(0deg); }
+                            to { transform: rotate(360deg); }
+                        }
+                        
+                        @keyframes loading {
+                            0% { transform: translateX(-100%); }
+                            50% { transform: translateX(0%); }
+                            100% { transform: translateX(100%); }
+                        }
+                    </style>
+                `;
+            }
+            
+            try {
+                const analysisResponse = await fetch(`/api/vision/analyze/${currentAnalysisId}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        symbol: symbol, 
+                        timeframe: timeframe 
+                    })
+                });
+                
+                if (!analysisResponse.ok) {
+                    const errorText = await analysisResponse.text();
+                    throw new Error(`Analysis failed (${analysisResponse.status}): ${errorText}`);
+                }
+                
+                const analysisResult = await analysisResponse.json();
+                console.log('🎯 AI Analysis completed:', analysisResult);
+                
+                // Display results in the consolidated panel
+                if (analysisResult.analysis && analysisResult.analysis.confidence !== null) {
+                    displayAnalysisResults(analysisResult.analysis, symbol, timeframe);
+                } else {
+                    throw new Error('No analysis data received or invalid response structure');
+                }
+                
+            } catch (error) {
+                console.error('❌ AI Analysis error:', error);
+                
+                // Show error state in the main panel
+                if (visionInsightElement) {
+                    visionInsightElement.innerHTML = `
+                        <div style="text-align: center; padding: 2rem;">
+                            <div style="font-size: 2rem; margin-bottom: 1rem; color: #ef4444;">⚠️</div>
+                            <div style="color: #ef4444; font-size: 1.1rem; font-weight: 600; margin-bottom: 0.5rem;">
+                                Analysis Failed
+                            </div>
+                            <div style="color: #94a3b8; font-size: 0.9rem; margin-bottom: 1rem;">
+                                ${error.message}
+                            </div>
+                            <button onclick="resetUploadArea()" class="btn btn-primary" style="margin-top: 0.5rem;">
+                                Try Again
+                            </button>
+                        </div>
+                    `;
+                }
+            }
+        }
+        
+        // Reset upload area to initial state
+        function resetUploadArea() {
+            currentAnalysisId = null;
+            document.getElementById('analysis-form').style.display = 'none';
+            document.getElementById('upload-status').style.display = 'none';
+            const chartUpload = document.getElementById('chart-image-upload');
+            if (chartUpload) chartUpload.value = '';
+            
+            const visionInsightElement = document.getElementById('vision-ai-insight');
+            if (visionInsightElement) {
+                visionInsightElement.innerHTML = `
+                    <div style="text-align: center; color: #94a3b8; margin-top: 80px;">
+                        <div style="font-size: 2rem; margin-bottom: 1rem;">📊</div>
+                        <p>Upload a chart image to get AI-powered technical analysis with Smart Money Concepts and market structure insights.</p>
+                    </div>
+                `;
+            }
+        }
+
+        // ==============================================
+        // SMART MONEY CONCEPTS INTEGRATION
+        // ==============================================
+        
+        let smcData = {};
+        
+        // Show SMC Analysis
+        function showSMCAnalysis() {
+            const smcCard = document.getElementById('smc-dashboard-card');
+            if (smcCard) {
+                smcCard.style.display = 'block';
+                loadSMCAnalysis();
+            }
+        }
+        
+        // Hide SMC Analysis
+        function hideSMCAnalysis() {
+            const smcCard = document.getElementById('smc-dashboard-card');
+            if (smcCard) {
+                smcCard.style.display = 'none';
+            }
+        }
+        
+        // Load SMC Analysis for selected symbol
+        async function loadSMCAnalysis() {
+            const symbol = document.getElementById('smc-symbol-select').value;
+            const contentDiv = document.getElementById('smc-analysis-content');
+            
+            // Show loading state
+            contentDiv.innerHTML = `
+                <div style="text-align: center; padding: 2rem;">
+                    <div style="font-size: 2rem; margin-bottom: 1rem; animation: spin 2s linear infinite;">🎯</div>
+                    <p style="color: #3b82f6;">Analyzing ${symbol} market structure...</p>
+                </div>
+            `;
+            
+            try {
+                // Try to fetch real SMC data
+                const response = await fetch(`/api/smc/analyze/${symbol}`);
+                let data;
+                
+                if (response.ok) {
+                    data = await response.json();
+                    if (data.success) {
+                        smcData[symbol] = data;
+                        displaySMCData(symbol, data);
+                    } else {
+                        throw new Error('SMC analysis failed');
+                    }
+                } else {
+                    // Use mock data for demonstration
+                    data = getMockSMCData(symbol);
+                    smcData[symbol] = data;
+                    displaySMCData(symbol, data);
+                }
+                
+            } catch (error) {
+                console.error('SMC Analysis error:', error);
+                // Use mock data as fallback
+                const mockData = getMockSMCData(symbol);
+                smcData[symbol] = mockData;
+                displaySMCData(symbol, mockData);
+            }
+        }
+        
+        // Display SMC Data
+        function displaySMCData(symbol, data) {
+            const contentDiv = document.getElementById('smc-analysis-content');
+            const summary = data.summary || data;
+            
+            const trendClass = getTrendClass(summary.swing_trend);
+            
+            contentDiv.innerHTML = `
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem; margin-bottom: 1.5rem;">
+                    <!-- Market Structure -->
+                    <div style="background: rgba(30, 41, 59, 0.5); border-radius: 8px; padding: 1.5rem; border: 1px solid #334155;">
+                        <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1rem;">
+                            <span style="font-size: 1.2rem;">📊</span>
+                            <h4 style="color: #f1f5f9; margin: 0;">Market Structure</h4>
+                        </div>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                            <div>
+                                <div style="color: #94a3b8; font-size: 0.9rem; margin-bottom: 0.5rem;">Swing Trend</div>
+                                <div style="color: #f1f5f9; font-weight: 600; font-size: 1.1rem;">
+                                    <span class="status-indicator ${trendClass}">${summary.swing_trend}</span>
+                                </div>
+                            </div>
+                            <div>
+                                <div style="color: #94a3b8; font-size: 0.9rem; margin-bottom: 0.5rem;">Internal Trend</div>
+                                <div style="color: #f1f5f9; font-weight: 600; font-size: 1.1rem;">
+                                    <span class="status-indicator ${getTrendClass(summary.internal_trend)}">${summary.internal_trend}</span>
+                                </div>
+                            </div>
+                            <div>
+                                <div style="color: #94a3b8; font-size: 0.9rem; margin-bottom: 0.5rem;">Swing High</div>
+                                <div style="color: #10b981; font-weight: 600;">${formatPrice(summary.swing_high, symbol)}</div>
+                            </div>
+                            <div>
+                                <div style="color: #94a3b8; font-size: 0.9rem; margin-bottom: 0.5rem;">Swing Low</div>
+                                <div style="color: #ef4444; font-weight: 600;">${formatPrice(summary.swing_low, symbol)}</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Order Blocks & Structure -->
+                    <div style="background: rgba(30, 41, 59, 0.5); border-radius: 8px; padding: 1.5rem; border: 1px solid #334155;">
+                        <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1rem;">
+                            <span style="font-size: 1.2rem;">🧱</span>
+                            <h4 style="color: #f1f5f9; margin: 0;">Order Blocks & Analysis</h4>
+                        </div>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                            <div style="text-align: center; padding: 1rem; background: rgba(59, 130, 246, 0.1); border-radius: 6px;">
+                                <div style="font-size: 1.5rem; font-weight: 700; color: #3b82f6;">${summary.order_blocks_count?.swing || 0}</div>
+                                <div style="color: #94a3b8; font-size: 0.9rem;">Swing OBs</div>
+                            </div>
+                            <div style="text-align: center; padding: 1rem; background: rgba(16, 185, 129, 0.1); border-radius: 6px;">
+                                <div style="font-size: 1.5rem; font-weight: 700; color: #10b981;">${summary.order_blocks_count?.internal || 0}</div>
+                                <div style="color: #94a3b8; font-size: 0.9rem;">Internal OBs</div>
+                            </div>
+                            <div style="text-align: center; padding: 1rem; background: rgba(245, 158, 11, 0.1); border-radius: 6px;">
+                                <div style="font-size: 1.5rem; font-weight: 700; color: #f59e0b;">${summary.fair_value_gaps_count || 0}</div>
+                                <div style="color: #94a3b8; font-size: 0.9rem;">Fair Value Gaps</div>
+                            </div>
+                            <div style="text-align: center; padding: 1rem; background: rgba(168, 85, 247, 0.1); border-radius: 6px;">
+                                <div style="font-size: 1.5rem; font-weight: 700; color: #a855f7;">${summary.structure_breakouts_count || 0}</div>
+                                <div style="color: #94a3b8; font-size: 0.9rem;">Breakouts</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Premium/Discount Zones -->
+                ${summary.zones ? `
+                <div style="background: rgba(30, 41, 59, 0.5); border-radius: 8px; padding: 1.5rem; border: 1px solid #334155; margin-bottom: 1.5rem;">
+                    <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1rem;">
+                        <span style="font-size: 1.2rem;">🎯</span>
+                        <h4 style="color: #f1f5f9; margin: 0;">Premium/Discount Zones</h4>
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem;">
+                        <div style="text-align: center; padding: 1rem; background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 6px;">
+                            <div style="color: #ef4444; font-weight: 600; margin-bottom: 0.5rem;">Premium Zone</div>
+                            <div style="color: #f1f5f9; font-size: 0.9rem;">${formatPrice(summary.zones.premium?.[0], symbol)} - ${formatPrice(summary.zones.premium?.[1], symbol)}</div>
+                        </div>
+                        <div style="text-align: center; padding: 1rem; background: rgba(156, 163, 175, 0.1); border: 1px solid rgba(156, 163, 175, 0.3); border-radius: 6px;">
+                            <div style="color: #9ca3af; font-weight: 600; margin-bottom: 0.5rem;">Equilibrium</div>
+                            <div style="color: #f1f5f9; font-size: 0.9rem;">${formatPrice(summary.zones.equilibrium?.[0], symbol)} - ${formatPrice(summary.zones.equilibrium?.[1], symbol)}</div>
+                        </div>
+                        <div style="text-align: center; padding: 1rem; background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 6px;">
+                            <div style="color: #10b981; font-weight: 600; margin-bottom: 0.5rem;">Discount Zone</div>
+                            <div style="color: #f1f5f9; font-size: 0.9rem;">${formatPrice(summary.zones.discount?.[0], symbol)} - ${formatPrice(summary.zones.discount?.[1], symbol)}</div>
+                        </div>
+                    </div>
+                </div>
+                ` : ''}
+                
+                <!-- SMC Alerts -->
+                ${summary.alerts && Object.keys(summary.alerts).length > 0 ? `
+                <div style="background: rgba(30, 41, 59, 0.5); border-radius: 8px; padding: 1.5rem; border: 1px solid #334155;">
+                    <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1rem;">
+                        <span style="font-size: 1.2rem;">🚨</span>
+                        <h4 style="color: #f1f5f9; margin: 0;">SMC Alerts</h4>
+                    </div>
+                    <div style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
+                        ${Object.entries(summary.alerts).filter(([key, value]) => value).map(([key, value]) => `
+                            <div style="padding: 0.5rem 1rem; background: rgba(245, 158, 11, 0.2); color: #f59e0b; border: 1px solid rgba(245, 158, 11, 0.3); border-radius: 20px; font-size: 0.9rem; font-weight: 600; animation: pulse 2s infinite;">
+                                ${formatAlertName(key)}
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+                ` : ''}
+                
+                <div style="text-align: center; margin-top: 1rem; color: #94a3b8; font-size: 0.9rem;">
+                    Last updated: ${new Date().toLocaleString()}
+                </div>
+            `;
+        }
+        
+        // Refresh SMC Analysis
+        async function refreshSMCAnalysis() {
+            await loadSMCAnalysis();
+        }
+        
+        // Get mock SMC data for demonstration
+        function getMockSMCData(symbol) {
+            const mockData = {
+                'EURUSD': {
+                    swing_trend: 'BULLISH',
+                    internal_trend: 'BULLISH',
+                    swing_high: 1.0950,
+                    swing_low: 1.0850,
+                    order_blocks_count: { swing: 3, internal: 5 },
+                    fair_value_gaps_count: 7,
+                    equal_highs_count: 2,
+                    equal_lows_count: 1,
+                    structure_breakouts_count: 2,
+                    zones: {
+                        premium: [1.0945, 1.0920],
+                        equilibrium: [1.0905, 1.0895],
+                        discount: [1.0870, 1.0850]
+                    },
+                    alerts: { swing_bullish_bos: true, equal_highs: true }
+                },
+                'GBPUSD': {
+                    swing_trend: 'BEARISH',
+                    internal_trend: 'BEARISH',
+                    swing_high: 1.2750,
+                    swing_low: 1.2650,
+                    order_blocks_count: { swing: 2, internal: 4 },
+                    fair_value_gaps_count: 5,
+                    equal_highs_count: 1,
+                    equal_lows_count: 3,
+                    structure_breakouts_count: 1,
+                    zones: {
+                        premium: [1.2745, 1.2720],
+                        equilibrium: [1.2705, 1.2695],
+                        discount: [1.2670, 1.2650]
+                    },
+                    alerts: { swing_bearish_choch: true }
+                },
+                'XAUUSD': {
+                    swing_trend: 'BULLISH',
+                    internal_trend: 'NEUTRAL',
+                    swing_high: 2680.50,
+                    swing_low: 2650.25,
+                    order_blocks_count: { swing: 4, internal: 6 },
+                    fair_value_gaps_count: 12,
+                    equal_highs_count: 0,
+                    equal_lows_count: 2,
+                    structure_breakouts_count: 3,
+                    zones: {
+                        premium: [2678.0, 2670.0],
+                        equilibrium: [2667.0, 2663.0],
+                        discount: [2655.0, 2650.25]
+                    },
+                    alerts: { swing_bullish_bos: true, internal_bullish_ob: true }
+                }
+            };
+            
+            return { summary: mockData[symbol] || mockData['EURUSD'] };
+        }
+        
+        // Helper functions
+        function getTrendClass(trend) {
+            switch (trend?.toUpperCase()) {
+                case 'BULLISH': return 'status-connected';
+                case 'BEARISH': return 'status-error';
+                default: return 'status-warning';
+            }
+        }
+        
+        function formatPrice(price, symbol) {
+            if (!price) return 'N/A';
+            
+            if (symbol?.includes('USD') && !symbol?.includes('JPY')) {
+                return price.toFixed(4);
+            } else if (symbol?.includes('JPY')) {
+                return price.toFixed(2);
+            } else if (symbol?.includes('XAU') || symbol?.includes('GOLD')) {
+                return '$' + price.toFixed(2);
+            } else if (symbol?.includes('BTC')) {
+                return '$' + price.toLocaleString();
+            }
+            
+            return price.toFixed(4);
+        }
+        
+        function formatAlertName(alertKey) {
+            return alertKey
+                .replace(/_/g, ' ')
+                .replace(/\b\w/g, l => l.toUpperCase());
+        }
+    </script>
+    </main>
+</body>
+</html> 

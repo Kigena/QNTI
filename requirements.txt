@@ -1,0 +1,36 @@
+# QNTI Trading System Dependencies
+
+# Core Framework
+Flask==2.3.3
+Flask-SocketIO==5.3.6
+Flask-CORS==4.0.0
+
+# Trading & Analysis
+MetaTrader5==5.0.45
+numpy==1.24.3
+pandas==2.0.3
+
+# ML & Data Processing
+scikit-learn==1.3.0
+scipy==1.11.1
+
+# Computer Vision (for chart analysis)
+opencv-python==4.8.0.76
+
+# HTTP & API
+requests==2.31.0
+httpx==0.24.1
+
+# Async & Concurrency
+asyncio-mqtt==0.16.1
+
+# Database
+sqlite3  # Built-in with Python
+
+# Utilities
+python-dotenv==1.0.0
+pathlib2==2.3.7
+dataclasses-json==0.5.14
+
+# Development & Monitoring
+psutil==5.9.5

@@ -1,0 +1,2238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SMC Automation - QNTI Trading System</title>
+    
+    <!-- CSS Imports -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.css">
+    
+    <!-- Custom Styles -->
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            color: #e2e8f0;
+            min-height: 100vh;
+            display: flex;
+        }
+
+        /* Sidebar Navigation */
+        .sidebar {
+            width: 280px;
+            background: rgba(15, 23, 42, 0.95);
+            backdrop-filter: blur(10px);
+            border-right: 1px solid #334155;
+            height: 100vh;
+            position: fixed;
+            left: 0;
+            top: 0;
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+        }
+
+        .sidebar-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid #334155;
+        }
+
+        .logo {
+            font-size: 1.3rem;
+            font-weight: bold;
+            background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-align: center;
+        }
+
+        .sidebar-content {
+            flex: 1;
+            padding: 1rem 0;
+        }
+
+        .nav-section {
+            margin-bottom: 2rem;
+        }
+
+        .nav-section-title {
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            padding: 0 1.5rem 0.5rem 1.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .nav-link {
+            color: #94a3b8;
+            text-decoration: none;
+            padding: 0.75rem 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            transition: all 0.2s;
+            border-left: 3px solid transparent;
+        }
+
+        .nav-link:hover {
+            background: rgba(100, 116, 139, 0.1);
+            color: #f1f5f9;
+            border-left-color: #3b82f6;
+        }
+
+        .nav-link.active {
+            background: rgba(59, 130, 246, 0.1);
+            color: #3b82f6;
+            border-left-color: #3b82f6;
+        }
+
+        .nav-icon {
+            font-size: 1.2rem;
+            width: 20px;
+            text-align: center;
+        }
+
+        /* Main Content Area */
+        .main-content {
+            flex: 1;
+            margin-left: 280px;
+            min-height: 100vh;
+        }
+
+        .main-header {
+            background: rgba(15, 23, 42, 0.8);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid #334155;
+            padding: 1rem 2rem;
+            position: sticky;
+            top: 0;
+            z-index: 50;
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .page-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .page-title {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(45deg, #ff6b6b, #4ecdc4);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .page-subtitle {
+            font-size: 1.1rem;
+            color: #b8c5e1;
+        }
+
+        .control-panel {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .control-row {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 1.1rem;
+        }
+
+        .status-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        .status-dot.running {
+            background: #4ecdc4;
+        }
+
+        .status-dot.stopped {
+            background: #ff6b6b;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-primary {
+            background: linear-gradient(45deg, #4ecdc4, #44a08d);
+            color: white;
+        }
+
+        .btn-danger {
+            background: linear-gradient(45deg, #ff6b6b, #ee5a52);
+            color: white;
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 1.5rem;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+            font-size: 1.2rem;
+            font-weight: 600;
+        }
+
+        .card-content {
+            color: #e1e8f0;
+        }
+
+        .metric {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+        }
+
+        .metric-value {
+            font-weight: bold;
+            color: #4ecdc4;
+        }
+
+        .signals-list {
+            max-height: 300px;
+            overflow-y: auto;
+            margin-top: 1rem;
+        }
+
+        .signal-item {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 0.5rem;
+            border-left: 4px solid #4ecdc4;
+        }
+
+        .signal-header {
+            display: flex;
+            justify-content: between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+
+        .signal-type {
+            background: linear-gradient(45deg, #4ecdc4, #44a08d);
+            color: white;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            font-weight: bold;
+        }
+
+        .signal-confidence {
+            font-size: 0.9rem;
+            color: #b8c5e1;
+        }
+
+        .signal-details {
+            font-size: 0.9rem;
+            color: #d1d9e6;
+        }
+
+        .settings-section {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 2rem;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            font-size: 1rem;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: #4ecdc4;
+            box-shadow: 0 0 0 2px rgba(78, 205, 196, 0.2);
+        }
+
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 60px;
+            height: 34px;
+        }
+
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(255, 255, 255, 0.2);
+            transition: .4s;
+            border-radius: 34px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 26px;
+            width: 26px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+
+        input:checked + .slider {
+            background-color: #4ecdc4;
+        }
+
+        input:checked + .slider:before {
+            transform: translateX(26px);
+        }
+
+        .chart-container {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .loading {
+            text-align: center;
+            padding: 2rem;
+            color: #b8c5e1;
+        }
+
+        .alert {
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+        }
+
+        .alert-success {
+            background: rgba(78, 205, 196, 0.2);
+            border: 1px solid rgba(78, 205, 196, 0.5);
+            color: #4ecdc4;
+        }
+
+        .alert-danger {
+            background: rgba(255, 107, 107, 0.2);
+            border: 1px solid rgba(255, 107, 107, 0.5);
+            color: #ff6b6b;
+        }
+
+        .alert-warning {
+            background: rgba(255, 193, 7, 0.2);
+            border: 1px solid rgba(255, 193, 7, 0.5);
+            color: #ffc107;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        /* Futuristic Reactor Animation Styles */
+        .reactor-container {
+            position: relative;
+            width: 200px;
+            height: 200px;
+            margin: 2rem auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .reactor-core {
+            position: absolute;
+            width: 80px;
+            height: 80px;
+            background: radial-gradient(circle, #4ecdc4, #2196F3, #0066cc);
+            border-radius: 50%;
+            box-shadow: 
+                0 0 20px #4ecdc4,
+                0 0 40px #4ecdc4,
+                0 0 60px #4ecdc4,
+                inset 0 0 20px #ffffff;
+            animation: reactorPulse 2s ease-in-out infinite;
+            z-index: 10;
+        }
+
+        .reactor-core.stopped {
+            background: radial-gradient(circle, #ff6b6b, #ff4444, #cc0000);
+            box-shadow: 
+                0 0 20px #ff6b6b,
+                0 0 40px #ff6b6b,
+                0 0 60px #ff6b6b,
+                inset 0 0 20px #ffffff;
+            animation: reactorPulseStop 3s ease-in-out infinite;
+        }
+
+        .energy-ring {
+            position: absolute;
+            border: 2px solid #4ecdc4;
+            border-radius: 50%;
+            opacity: 0;
+            animation: energyRingExpand 3s linear infinite;
+        }
+
+        .energy-ring.stopped {
+            border-color: #ff6b6b;
+            animation: energyRingExpandStop 4s linear infinite;
+        }
+
+        .energy-ring:nth-child(2) { animation-delay: 0.5s; }
+        .energy-ring:nth-child(3) { animation-delay: 1s; }
+        .energy-ring:nth-child(4) { animation-delay: 1.5s; }
+        .energy-ring:nth-child(5) { animation-delay: 2s; }
+        .energy-ring:nth-child(6) { animation-delay: 2.5s; }
+
+        .particle {
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            background: #4ecdc4;
+            border-radius: 50%;
+            box-shadow: 0 0 6px #4ecdc4;
+            animation: particleFloat 4s linear infinite;
+        }
+
+        .particle.stopped {
+            background: #ff6b6b;
+            box-shadow: 0 0 6px #ff6b6b;
+            animation: particleFloatStop 5s linear infinite;
+        }
+
+        .energy-beam {
+            position: absolute;
+            width: 2px;
+            height: 100px;
+            background: linear-gradient(to top, transparent, #4ecdc4, transparent);
+            transform-origin: bottom;
+            animation: energyBeamRotate 8s linear infinite;
+        }
+
+        .energy-beam.stopped {
+            background: linear-gradient(to top, transparent, #ff6b6b, transparent);
+            animation: energyBeamRotateStop 12s linear infinite;
+        }
+
+        .energy-beam:nth-child(1) { transform: rotate(0deg); }
+        .energy-beam:nth-child(2) { transform: rotate(60deg); }
+        .energy-beam:nth-child(3) { transform: rotate(120deg); }
+        .energy-beam:nth-child(4) { transform: rotate(180deg); }
+        .energy-beam:nth-child(5) { transform: rotate(240deg); }
+        .energy-beam:nth-child(6) { transform: rotate(300deg); }
+
+        .reactor-status-text {
+            position: absolute;
+            bottom: -30px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 1.2rem;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: #4ecdc4;
+            text-shadow: 0 0 10px #4ecdc4;
+            animation: statusTextGlow 2s ease-in-out infinite;
+        }
+
+        .reactor-status-text.stopped {
+            color: #ff6b6b;
+            text-shadow: 0 0 10px #ff6b6b;
+            animation: statusTextGlowStop 3s ease-in-out infinite;
+        }
+
+        .control-panel-enhanced {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .control-panel-enhanced::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(45deg, rgba(78, 205, 196, 0.1), rgba(33, 150, 243, 0.1));
+            opacity: 0;
+            transition: opacity 0.3s;
+            pointer-events: none;
+        }
+
+        .control-panel-enhanced.reactor-running::before {
+            opacity: 1;
+            animation: backgroundPulse 4s ease-in-out infinite;
+        }
+
+        /* Keyframe Animations */
+        @keyframes reactorPulse {
+            0%, 100% { 
+                transform: scale(1);
+                box-shadow: 
+                    0 0 20px #4ecdc4,
+                    0 0 40px #4ecdc4,
+                    0 0 60px #4ecdc4,
+                    inset 0 0 20px #ffffff;
+            }
+            50% { 
+                transform: scale(1.1);
+                box-shadow: 
+                    0 0 30px #4ecdc4,
+                    0 0 60px #4ecdc4,
+                    0 0 90px #4ecdc4,
+                    inset 0 0 30px #ffffff;
+            }
+        }
+
+        @keyframes reactorPulseStop {
+            0%, 100% { 
+                transform: scale(1);
+                box-shadow: 
+                    0 0 10px #ff6b6b,
+                    0 0 20px #ff6b6b,
+                    0 0 30px #ff6b6b,
+                    inset 0 0 10px #ffffff;
+            }
+            50% { 
+                transform: scale(1.05);
+                box-shadow: 
+                    0 0 15px #ff6b6b,
+                    0 0 30px #ff6b6b,
+                    0 0 45px #ff6b6b,
+                    inset 0 0 15px #ffffff;
+            }
+        }
+
+        @keyframes energyRingExpand {
+            0% {
+                width: 80px;
+                height: 80px;
+                opacity: 1;
+                border-width: 3px;
+            }
+            100% {
+                width: 200px;
+                height: 200px;
+                opacity: 0;
+                border-width: 1px;
+            }
+        }
+
+        @keyframes energyRingExpandStop {
+            0% {
+                width: 80px;
+                height: 80px;
+                opacity: 0.6;
+                border-width: 2px;
+            }
+            100% {
+                width: 160px;
+                height: 160px;
+                opacity: 0;
+                border-width: 1px;
+            }
+        }
+
+        @keyframes particleFloat {
+            0% {
+                transform: translateY(0) rotate(0deg);
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.7;
+            }
+            100% {
+                transform: translateY(-100px) rotate(360deg);
+                opacity: 0;
+            }
+        }
+
+        @keyframes particleFloatStop {
+            0% {
+                transform: translateY(0) rotate(0deg);
+                opacity: 0.6;
+            }
+            50% {
+                opacity: 0.3;
+            }
+            100% {
+                transform: translateY(-60px) rotate(180deg);
+                opacity: 0;
+            }
+        }
+
+        @keyframes energyBeamRotate {
+            0% { transform: rotate(0deg); opacity: 0.8; }
+            50% { opacity: 1; }
+            100% { transform: rotate(360deg); opacity: 0.8; }
+        }
+
+        @keyframes energyBeamRotateStop {
+            0% { transform: rotate(0deg); opacity: 0.3; }
+            50% { opacity: 0.5; }
+            100% { transform: rotate(180deg); opacity: 0.3; }
+        }
+
+        @keyframes statusTextGlow {
+            0%, 100% { 
+                text-shadow: 0 0 10px #4ecdc4;
+            }
+            50% { 
+                text-shadow: 0 0 20px #4ecdc4, 0 0 30px #4ecdc4;
+            }
+        }
+
+        @keyframes statusTextGlowStop {
+            0%, 100% { 
+                text-shadow: 0 0 5px #ff6b6b;
+            }
+            50% { 
+                text-shadow: 0 0 10px #ff6b6b, 0 0 15px #ff6b6b;
+            }
+        }
+
+        @keyframes backgroundPulse {
+            0%, 100% { opacity: 0.1; }
+            50% { opacity: 0.3; }
+        }
+
+        /* Trade Setup Styles */
+        .setup-card {
+            background: rgba(139, 92, 246, 0.1);
+            border: 1px solid #8b5cf6;
+            border-radius: 12px;
+            margin-bottom: 15px;
+            padding: 15px;
+            transition: all 0.3s ease;
+        }
+
+        .setup-card.ready-for-entry {
+            border-color: #4ecdc4;
+            box-shadow: 0 0 20px rgba(78, 205, 196, 0.3);
+            animation: setupPulse 2s infinite;
+        }
+
+        @keyframes setupPulse {
+            0%, 100% { box-shadow: 0 0 20px rgba(78, 205, 196, 0.3); }
+            50% { box-shadow: 0 0 30px rgba(78, 205, 196, 0.6); }
+        }
+
+        .setup-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .setup-symbol {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #4ecdc4;
+        }
+
+        .setup-direction {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        .setup-direction.buy { 
+            background: rgba(78, 205, 196, 0.2); 
+            color: #4ecdc4; 
+        }
+
+        .setup-direction.sell { 
+            background: rgba(255, 107, 107, 0.2); 
+            color: #ff6b6b; 
+        }
+
+        .signal-type-badge {
+            padding: 4px 10px;
+            border-radius: 15px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .signal-order-block { background: linear-gradient(135deg, #8b5cf6, #7c3aed); }
+        .signal-fvg { background: linear-gradient(135deg, #3b82f6, #2563eb); }
+        .signal-bos { background: linear-gradient(135deg, #10b981, #059669); }
+        .signal-liquidity { background: linear-gradient(135deg, #f59e0b, #d97706); }
+
+        .setup-prices {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1rem;
+            margin: 1rem 0;
+            text-align: center;
+        }
+
+        .price-item {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 0.5rem;
+            border-radius: 8px;
+        }
+
+        .price-label {
+            font-size: 0.7rem;
+            color: #b8c5e1;
+            text-transform: uppercase;
+        }
+
+        .price-value {
+            font-weight: bold;
+            color: #4ecdc4;
+            font-size: 0.9rem;
+        }
+
+        .confidence-meter {
+            height: 6px;
+            background: #374151;
+            border-radius: 3px;
+            overflow: hidden;
+            margin: 0.5rem 0;
+        }
+
+        .confidence-fill {
+            height: 100%;
+            transition: width 0.3s ease;
+            border-radius: 3px;
+        }
+
+        .confidence-excellent { background: linear-gradient(90deg, #4ecdc4, #00a693); }
+        .confidence-good { background: linear-gradient(90deg, #f59e0b, #d97706); }
+        .confidence-fair { background: linear-gradient(90deg, #ff6b6b, #dc2626); }
+
+        .setup-details {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 8px;
+            padding: 10px;
+            margin: 10px 0;
+            font-family: monospace;
+            font-size: 0.8rem;
+        }
+
+        .setup-actions {
+            display: flex;
+            gap: 0.5rem;
+            justify-content: flex-end;
+            margin-top: 1rem;
+        }
+
+        .btn-execute {
+            background: linear-gradient(135deg, #4ecdc4, #00a693);
+            border: none;
+            color: white;
+            font-weight: bold;
+            padding: 6px 12px;
+            border-radius: 15px;
+            font-size: 0.8rem;
+            transition: all 0.3s ease;
+        }
+
+        .btn-execute:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(78, 205, 196, 0.4);
+        }
+
+        .market-structure-visual {
+            background: rgba(59, 130, 246, 0.1);
+            border: 1px solid #3b82f6;
+            border-radius: 10px;
+            padding: 15px;
+            margin: 10px 0;
+        }
+
+        .swing-point {
+            display: inline-block;
+            background: #3b82f6;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 12px;
+            margin: 2px;
+            font-size: 0.7rem;
+        }
+
+        .trend-indicator {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 15px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        .trend-bullish { background: rgba(78, 205, 196, 0.2); color: #4ecdc4; }
+        .trend-bearish { background: rgba(255, 107, 107, 0.2); color: #ff6b6b; }
+        .trend-neutral { background: rgba(255, 193, 7, 0.2); color: #ffc107; }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .container {
+                padding: 0 1rem;
+            }
+            
+            .navbar-container {
+                padding: 0 1rem;
+                flex-direction: column;
+                gap: 1rem;
+            }
+            
+            .nav-links {
+                gap: 1rem;
+            }
+            
+            .control-row {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 1rem;
+            }
+            
+            .grid {
+                grid-template-columns: 1fr;
+            }
+
+            .setup-prices {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .setup-header {
+                flex-direction: column;
+                gap: 0.5rem;
+                align-items: flex-start;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Sidebar Navigation -->
+    <nav class="sidebar">
+        <div class="sidebar-header">
+            <div class="logo">QNTI Trading System</div>
+        </div>
+        
+        <div class="sidebar-content">
+            <div class="nav-section">
+                <div class="nav-section-title">Main</div>
+                <a href="main_dashboard.html" class="nav-link">
+                    <span class="nav-icon">📊</span>
+                    <span>Dashboard</span>
+                </a>
+                <a href="vision_trading_charts.html" class="nav-link">
+                    <span class="nav-icon">👁️</span>
+                    <span>Vision Trading</span>
+                </a>
+            </div>
+
+            <div class="nav-section">
+                <div class="nav-section-title">Trading</div>
+                <a href="trading_center.html" class="nav-link">
+                    <span class="nav-icon">📈</span>
+                    <span>Trading Center</span>
+                </a>
+                <a href="market_intelligence_board.html" class="nav-link">
+                    <span class="nav-icon">🧠</span>
+                    <span>Intelligence</span>
+                </a>
+                <a href="forex_advisor_chat.html" class="nav-link">
+                    <span class="nav-icon">💬</span>
+                    <span>Advisor Chat</span>
+                </a>
+                <a href="ea_management.html" class="nav-link">
+                    <span class="nav-icon">🤖</span>
+                    <span>EA Manager</span>
+                </a>
+                <a href="unified_automation.html" class="nav-link">
+                    <span class="nav-icon">🎯</span>
+                    <span>Unified Automation</span>
+                </a>
+            </div>
+
+            <div class="nav-section">
+                <div class="nav-section-title">Analysis</div>
+                <a href="strategy_tester.html" class="nav-link">
+                    <span class="nav-icon">🧪</span>
+                    <span>Strategy Tester</span>
+                </a>
+                <a href="analytics_reports.html" class="nav-link">
+                    <span class="nav-icon">📊</span>
+                    <span>Analytics</span>
+                </a>
+                <a href="smc_analysis.html" class="nav-link">
+                    <span class="nav-icon">🎯</span>
+                    <span>Smart Money Concepts</span>
+                </a>
+                <a href="smc_automation.html" class="nav-link active">
+                    <span class="nav-icon">🚀</span>
+                    <span>SMC Automation</span>
+                </a>
+            </div>
+
+            <div class="nav-section">
+                <div class="nav-section-title">Tools</div>
+                
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content Area -->
+    <main class="main-content">
+        <div class="main-header">
+            <div class="header-content">
+                <div class="page-title">SMC Automation Control Center</div>
+                <div class="status-indicators">
+                    <div class="status-item">
+                        <span>SMC Auto:</span>
+                        <div class="status-dot status-error" id="smc-auto-status"></div>
+                    </div>
+                    <div class="status-item">
+                        <span>MT5:</span>
+                        <div class="status-dot status-connected" id="mt5-status"></div>
+                    </div>
+                    <div style="margin-left: 1rem; font-size: 0.9rem; color: #94a3b8;">
+                        <span id="last-update">--:--:--</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Container -->
+        <div class="container">
+        <!-- Page Header -->
+        <div class="page-header">
+            <h1 class="page-title">
+                <i class="fas fa-robot"></i> Smart Money Concepts Automation
+            </h1>
+            <p class="page-subtitle">
+                Automated signal generation, alerts, and trading based on Smart Money Concepts
+            </p>
+        </div>
+
+        <!-- Alert Container -->
+        <div id="alertContainer"></div>
+
+        <!-- Enhanced Control Panel with Reactor Animation -->
+        <div id="controlPanel" class="control-panel-enhanced">
+            <h2><i class="fas fa-atom"></i> SMC Reactor Core Control</h2>
+            
+            <!-- Futuristic Reactor Animation -->
+            <div class="reactor-container">
+                <!-- Energy Beams -->
+                <div class="energy-beam stopped"></div>
+                <div class="energy-beam stopped"></div>
+                <div class="energy-beam stopped"></div>
+                <div class="energy-beam stopped"></div>
+                <div class="energy-beam stopped"></div>
+                <div class="energy-beam stopped"></div>
+                
+                <!-- Energy Rings -->
+                <div class="energy-ring stopped"></div>
+                <div class="energy-ring stopped"></div>
+                <div class="energy-ring stopped"></div>
+                <div class="energy-ring stopped"></div>
+                <div class="energy-ring stopped"></div>
+                
+                <!-- Reactor Core -->
+                <div id="reactorCore" class="reactor-core stopped"></div>
+                
+                <!-- Floating Particles -->
+                <div class="particle stopped" style="top: 20%; left: 30%; animation-delay: 0s;"></div>
+                <div class="particle stopped" style="top: 40%; left: 70%; animation-delay: 1s;"></div>
+                <div class="particle stopped" style="top: 60%; left: 20%; animation-delay: 2s;"></div>
+                <div class="particle stopped" style="top: 80%; left: 80%; animation-delay: 3s;"></div>
+                <div class="particle stopped" style="top: 30%; left: 50%; animation-delay: 0.5s;"></div>
+                <div class="particle stopped" style="top: 70%; left: 40%; animation-delay: 1.5s;"></div>
+                <div class="particle stopped" style="top: 10%; left: 60%; animation-delay: 2.5s;"></div>
+                <div class="particle stopped" style="top: 90%; left: 25%; animation-delay: 3.5s;"></div>
+                
+                <!-- Status Text -->
+                <div id="reactorStatusText" class="reactor-status-text stopped">OFFLINE</div>
+            </div>
+            
+            <div class="control-row">
+                <div class="status-indicator">
+                    <div id="statusDot" class="status-dot stopped"></div>
+                    <span id="statusText">Reactor Offline</span>
+                </div>
+                
+                <div class="control-buttons">
+                    <button id="startBtn" class="btn btn-primary">
+                        <i class="fas fa-power-off"></i> Initiate Reactor
+                    </button>
+                    <button id="stopBtn" class="btn btn-danger" disabled>
+                        <i class="fas fa-stop"></i> Emergency Shutdown
+                    </button>
+                    <button id="restartBtn" class="btn btn-secondary">
+                        <i class="fas fa-redo"></i> Force Restart
+                    </button>
+                    <button id="refreshBtn" class="btn btn-secondary">
+                        <i class="fas fa-sync-alt"></i> System Status
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Statistics Grid -->
+        <div class="grid">
+            <!-- System Status -->
+            <div class="card">
+                <div class="card-header">
+                    <i class="fas fa-heartbeat"></i> System Status
+                </div>
+                <div class="card-content">
+                    <div class="metric">
+                        <span>Status:</span>
+                        <span id="systemStatus" class="metric-value">Loading...</span>
+                    </div>
+                    <div class="metric">
+                        <span>Active Signals:</span>
+                        <span id="activeSignals" class="metric-value">0</span>
+                    </div>
+                    <div class="metric">
+                        <span>Total Generated:</span>
+                        <span id="totalSignals" class="metric-value">0</span>
+                    </div>
+                    <div class="metric">
+                        <span>Auto Trading:</span>
+                        <span id="autoTradingStatus" class="metric-value">Disabled</span>
+                    </div>
+                    <div class="metric">
+                        <span>Monitoring Symbols:</span>
+                        <span id="monitoringSymbols" class="metric-value">12</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Performance Metrics -->
+            <div class="card">
+                <div class="card-header">
+                    <i class="fas fa-chart-bar"></i> Performance Metrics
+                </div>
+                <div class="card-content">
+                    <div class="metric">
+                        <span>Avg Confidence:</span>
+                        <span id="avgConfidence" class="metric-value">0%</span>
+                    </div>
+                    <div class="metric">
+                        <span>Avg Risk/Reward:</span>
+                        <span id="avgRiskReward" class="metric-value">0:0</span>
+                    </div>
+                    <div class="metric">
+                        <span>Top Signal Type:</span>
+                        <span id="topSignalType" class="metric-value">N/A</span>
+                    </div>
+                    <div class="metric">
+                        <span>Top Symbol:</span>
+                        <span id="topSymbol" class="metric-value">N/A</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Alerts -->
+            <div class="card">
+                <div class="card-header">
+                    <i class="fas fa-bell"></i> Recent Alerts
+                </div>
+                <div class="card-content">
+                    <div id="recentAlerts" class="loading">
+                        Loading alerts...
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Active Signals -->
+        <div class="card">
+            <div class="card-header">
+                <i class="fas fa-signal"></i> Active Trading Signals
+                <button id="refreshSignalsBtn" class="btn btn-secondary" style="margin-left: auto;">
+                    <i class="fas fa-sync-alt"></i> Refresh
+                </button>
+            </div>
+            <div class="card-content">
+                <div id="activeSignalsList" class="signals-list loading">
+                    Loading active signals...
+                </div>
+            </div>
+        </div>
+
+        <!-- Trade Setups Panel -->
+        <div class="card">
+            <div class="card-header">
+                <i class="fas fa-bullseye"></i> Identified Trade Setups
+                <div style="margin-left: auto; display: flex; gap: 1rem; align-items: center;">
+                    <select id="symbol-filter" class="form-control" style="width: auto;">
+                        <option value="">All Symbols</option>
+                    </select>
+                    <select id="signal-type-filter" class="form-control" style="width: auto;">
+                        <option value="">All Signal Types</option>
+                        <option value="order_block">Order Blocks</option>
+                        <option value="fvg">Fair Value Gaps</option>
+                        <option value="bos">Break of Structure</option>
+                        <option value="liquidity">Liquidity Zones</option>
+                    </select>
+                    <label style="display: flex; align-items: center; gap: 0.5rem; margin: 0;">
+                        <input type="checkbox" id="auto-execute-toggle" style="transform: scale(1.2);">
+                        <span style="font-size: 0.9rem;">Auto Execute</span>
+                    </label>
+                </div>
+            </div>
+            <div class="card-content">
+                <div id="trade-setups-container" class="loading">
+                    Loading trade setups...
+                </div>
+                <div id="no-setups" class="hidden" style="text-align: center; padding: 2rem; color: #b8c5e1;">
+                    <i class="fas fa-search" style="font-size: 2rem; margin-bottom: 1rem; display: block;"></i>
+                    <h5>No Trade Setups Found</h5>
+                    <p>Start the reactor to detect SMC setups</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Market Structure Panel -->
+        <div class="grid" style="margin-bottom: 2rem;">
+            <div class="card">
+                <div class="card-header">
+                    <i class="fas fa-sitemap"></i> Market Structure Analysis
+                </div>
+                <div class="card-content">
+                    <div id="market-structure-container" class="loading">
+                        Loading market structure...
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card">
+                <div class="card-header">
+                    <i class="fas fa-chart-bar"></i> Setup Statistics
+                </div>
+                <div class="card-content">
+                    <div class="metric">
+                        <span>Ready for Entry:</span>
+                        <span id="ready-entries" class="metric-value">0</span>
+                    </div>
+                    <div class="metric">
+                        <span>Average Confidence:</span>
+                        <span id="avg-setup-confidence" class="metric-value">0%</span>
+                    </div>
+                    <div class="metric">
+                        <span>Trades Executed:</span>
+                        <span id="trades-executed" class="metric-value">0</span>
+                    </div>
+                    <div class="metric">
+                        <span>Success Rate:</span>
+                        <span id="success-rate" class="metric-value">0%</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Settings Panel -->
+        <div class="settings-section">
+            <h2><i class="fas fa-cog"></i> Automation Settings</h2>
+            
+            <div class="grid">
+                <div>
+                    <h3>General Settings</h3>
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" id="autoTradingEnabled"> Auto Trading Enabled
+                        </label>
+                    </div>
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" id="alertNotifications" checked> Alert Notifications
+                        </label>
+                    </div>
+                    <div class="form-group">
+                        <label for="minConfidence">Minimum Signal Confidence (%):</label>
+                        <input type="range" id="minConfidence" class="form-control" min="50" max="95" value="70">
+                        <span id="minConfidenceValue">70%</span>
+                    </div>
+                </div>
+
+                <div>
+                    <h3>Risk Management</h3>
+                    <div class="form-group">
+                        <label for="maxRiskPerTrade">Max Risk Per Trade (%):</label>
+                        <input type="number" id="maxRiskPerTrade" class="form-control" min="0.1" max="10" step="0.1" value="2.0">
+                    </div>
+                    <div class="form-group">
+                        <label for="maxDailyDrawdown">Max Daily Drawdown (%):</label>
+                        <input type="number" id="maxDailyDrawdown" class="form-control" min="1" max="20" step="0.5" value="5.0">
+                    </div>
+                    <div class="form-group">
+                        <label for="defaultRiskReward">Default Risk:Reward Ratio:</label>
+                        <input type="number" id="defaultRiskReward" class="form-control" min="1" max="5" step="0.1" value="2.0">
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <button id="saveSettingsBtn" class="btn btn-primary">
+                    <i class="fas fa-save"></i> Save Settings
+                </button>
+                <button id="resetSettingsBtn" class="btn btn-secondary">
+                    <i class="fas fa-undo"></i> Reset to Defaults
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <script>
+        class SMCAutomationDashboard {
+            constructor() {
+                this.isRunning = false;
+                this.refreshInterval = null;
+                this.init();
+            }
+
+            init() {
+                this.bindEvents();
+                this.loadStatus();
+                this.loadSettings();
+                this.loadTradeSetups();
+                this.startAutoRefresh();
+                this.autoExecute = false;
+            }
+
+            bindEvents() {
+                document.getElementById('startBtn').addEventListener('click', () => this.startAutomation());
+                document.getElementById('stopBtn').addEventListener('click', () => this.stopAutomation());
+                document.getElementById('restartBtn').addEventListener('click', () => this.restartAutomation());
+                document.getElementById('refreshBtn').addEventListener('click', () => this.loadStatus());
+                document.getElementById('refreshSignalsBtn').addEventListener('click', () => this.loadActiveSignals());
+                document.getElementById('saveSettingsBtn').addEventListener('click', () => this.saveSettings());
+                document.getElementById('resetSettingsBtn').addEventListener('click', () => this.resetSettings());
+                
+                // Trade setups events
+                document.getElementById('auto-execute-toggle').addEventListener('change', (e) => {
+                    this.autoExecute = e.target.checked;
+                    this.showAlert(this.autoExecute ? '✅ Auto-execution enabled' : '⚠️ Auto-execution disabled', 
+                                 this.autoExecute ? 'success' : 'warning');
+                });
+                
+                // Filter events
+                document.getElementById('symbol-filter').addEventListener('change', () => this.filterTradeSetups());
+                document.getElementById('signal-type-filter').addEventListener('change', () => this.filterTradeSetups());
+                
+                // Update confidence display
+                document.getElementById('minConfidence').addEventListener('input', (e) => {
+                    document.getElementById('minConfidenceValue').textContent = e.target.value + '%';
+                });
+            }
+
+            async startAutomation() {
+                try {
+                    this.showAlert('🚀 Initiating SMC Reactor Core...', 'warning');
+                    
+                    // Add temporary startup animation
+                    this.showReactorStartupSequence();
+                    
+                    const response = await fetch('/api/smc-automation/start', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'}
+                    });
+                    
+                    const result = await response.json();
+                    
+                    if (result.success) {
+                        this.showAlert('✅ SMC Reactor Core Online! Automation started successfully!', 'success');
+                        this.updateControlButtons(true);
+                        this.loadStatus();
+                    } else {
+                        if (result.error && result.error.includes('already running')) {
+                            this.showAlert('⚠️ Reactor is already online. Use "Force Restart" if needed.', 'warning');
+                        } else {
+                            this.showAlert('❌ Failed to start reactor: ' + result.error, 'danger');
+                        }
+                    }
+                } catch (error) {
+                    this.showAlert('❌ Reactor startup error: ' + error.message, 'danger');
+                }
+            }
+
+            async stopAutomation() {
+                try {
+                    this.showAlert('🛑 Initiating Emergency Reactor Shutdown...', 'warning');
+                    
+                    // Add temporary shutdown animation
+                    this.showReactorShutdownSequence();
+                    
+                    const response = await fetch('/api/smc-automation/stop', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'}
+                    });
+                    
+                    const result = await response.json();
+                    
+                    if (result.success) {
+                        this.showAlert('✅ SMC Reactor Core Offline! Automation stopped successfully!', 'success');
+                        this.updateControlButtons(false);
+                        this.loadStatus();
+                    } else {
+                        this.showAlert('❌ Failed to stop reactor: ' + result.error, 'danger');
+                    }
+                } catch (error) {
+                    this.showAlert('❌ Reactor shutdown error: ' + error.message, 'danger');
+                }
+            }
+
+            async restartAutomation() {
+                try {
+                    this.showAlert('🔄 Force Restarting SMC Reactor Core...', 'warning');
+                    
+                    // Add temporary restart animation
+                    this.showReactorRestartSequence();
+                    
+                    const response = await fetch('/api/smc-automation/restart', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'}
+                    });
+                    
+                    const result = await response.json();
+                    
+                    if (result.success) {
+                        this.showAlert('✅ SMC Reactor Core Restarted! Automation online!', 'success');
+                        this.updateControlButtons(true);
+                        this.loadStatus();
+                    } else {
+                        this.showAlert('❌ Failed to restart reactor: ' + result.error, 'danger');
+                    }
+                } catch (error) {
+                    this.showAlert('❌ Reactor restart error: ' + error.message, 'danger');
+                }
+            }
+
+            showReactorStartupSequence() {
+                const statusText = document.getElementById('reactorStatusText');
+                const steps = ['INITIALIZING...', 'WARMING UP...', 'CALIBRATING...', 'READY'];
+                let stepIndex = 0;
+                
+                const interval = setInterval(() => {
+                    if (stepIndex < steps.length) {
+                        statusText.textContent = steps[stepIndex];
+                        stepIndex++;
+                    } else {
+                        clearInterval(interval);
+                    }
+                }, 500);
+            }
+
+            showReactorShutdownSequence() {
+                const statusText = document.getElementById('reactorStatusText');
+                const steps = ['SHUTTING DOWN...', 'COOLING...', 'DISCONNECTING...', 'OFFLINE'];
+                let stepIndex = 0;
+                
+                const interval = setInterval(() => {
+                    if (stepIndex < steps.length) {
+                        statusText.textContent = steps[stepIndex];
+                        stepIndex++;
+                    } else {
+                        clearInterval(interval);
+                    }
+                }, 500);
+            }
+
+            showReactorRestartSequence() {
+                const statusText = document.getElementById('reactorStatusText');
+                const steps = ['RESTARTING...', 'PURGING...', 'REBOOTING...', 'ONLINE'];
+                let stepIndex = 0;
+                
+                const interval = setInterval(() => {
+                    if (stepIndex < steps.length) {
+                        statusText.textContent = steps[stepIndex];
+                        stepIndex++;
+                    } else {
+                        clearInterval(interval);
+                    }
+                }, 500);
+            }
+
+            async loadStatus() {
+                try {
+                    const response = await fetch('/api/smc-automation/status');
+                    const result = await response.json();
+                    
+                    if (result.success) {
+                        this.updateStatusDisplay(result.data);
+                        this.updateControlButtons(result.data.is_running);
+                        this.loadPerformanceMetrics();
+                        this.loadActiveSignals();
+                        this.loadRecentAlerts();
+                    } else {
+                        document.getElementById('systemStatus').textContent = 'Error';
+                    }
+                } catch (error) {
+                    console.error('Error loading status:', error);
+                    document.getElementById('systemStatus').textContent = 'Connection Error';
+                }
+            }
+
+            async loadPerformanceMetrics() {
+                try {
+                    const response = await fetch('/api/smc-automation/performance');
+                    const result = await response.json();
+                    
+                    if (result.success) {
+                        this.updatePerformanceDisplay(result.data);
+                    }
+                } catch (error) {
+                    console.error('Error loading performance metrics:', error);
+                }
+            }
+
+            async loadActiveSignals() {
+                try {
+                    const response = await fetch('/api/smc-automation/signals');
+                    
+                    // Check if response is ok before trying to parse JSON
+                    if (!response.ok) {
+                        console.log('SMC Signals API not available (404), using fallback data');
+                        this.updateActiveSignalsDisplay([]);
+                        return;
+                    }
+                    
+                    const result = await response.json();
+                    
+                    // Safely access nested properties with fallbacks
+                    if (result && result.success) {
+                        const signals = result.signals || result.data?.signals || [];
+                        this.updateActiveSignalsDisplay(signals);
+                    } else {
+                        console.log('SMC Signals API returned unsuccessful response');
+                        this.updateActiveSignalsDisplay([]);
+                    }
+                } catch (error) {
+                    console.log('SMC Signals API unavailable, using fallback:', error.message);
+                    this.updateActiveSignalsDisplay([]);
+                }
+            }
+
+            async loadRecentAlerts() {
+                try {
+                    const response = await fetch('/api/smc-automation/alerts/recent');
+                    
+                    // Check if response is ok before trying to parse JSON
+                    if (!response.ok) {
+                        console.log('SMC Alerts API not available (404), using fallback data');
+                        this.updateRecentAlertsDisplay([]);
+                        return;
+                    }
+                    
+                    const result = await response.json();
+                    
+                    // Safely access nested properties with fallbacks
+                    if (result && result.success) {
+                        const alerts = result.alerts || result.data?.alerts || [];
+                        this.updateRecentAlertsDisplay(alerts);
+                    } else {
+                        console.log('SMC Alerts API returned unsuccessful response');
+                        this.updateRecentAlertsDisplay([]);
+                    }
+                } catch (error) {
+                    console.log('SMC Alerts API unavailable, using fallback:', error.message);
+                    this.updateRecentAlertsDisplay([]);
+                }
+            }
+
+            async loadSettings() {
+                try {
+                    const response = await fetch('/api/smc-automation/settings');
+                    const result = await response.json();
+                    
+                    if (result.success) {
+                        this.updateSettingsDisplay(result.data);
+                    }
+                } catch (error) {
+                    console.error('Error loading settings:', error);
+                }
+            }
+
+            async saveSettings() {
+                try {
+                    const settings = this.collectSettingsFromForm();
+                    
+                    const response = await fetch('/api/smc-automation/settings', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify(settings)
+                    });
+                    
+                    const result = await response.json();
+                    
+                    if (result.success) {
+                        this.showAlert('Settings saved successfully!', 'success');
+                    } else {
+                        this.showAlert('Failed to save settings: ' + result.error, 'danger');
+                    }
+                } catch (error) {
+                    this.showAlert('Error saving settings: ' + error.message, 'danger');
+                }
+            }
+
+            updateStatusDisplay(data) {
+                document.getElementById('systemStatus').textContent = data.is_running ? 'Running' : 'Stopped';
+                document.getElementById('activeSignals').textContent = data.active_signals || 0;
+                document.getElementById('totalSignals').textContent = data.total_signals_generated || 0;
+                document.getElementById('autoTradingStatus').textContent = data.auto_trading_enabled ? 'Enabled' : 'Disabled';
+                
+                const statusDot = document.getElementById('statusDot');
+                const statusText = document.getElementById('statusText');
+                
+                if (data.is_running) {
+                    statusDot.className = 'status-dot running';
+                    statusText.textContent = 'Reactor Online';
+                    this.activateReactor();
+                } else {
+                    statusDot.className = 'status-dot stopped';
+                    statusText.textContent = 'Reactor Offline';
+                    this.deactivateReactor();
+                }
+            }
+
+            activateReactor() {
+                // Update control panel background
+                const controlPanel = document.getElementById('controlPanel');
+                controlPanel.classList.add('reactor-running');
+
+                // Update reactor core
+                const reactorCore = document.getElementById('reactorCore');
+                reactorCore.classList.remove('stopped');
+
+                // Update status text
+                const statusText = document.getElementById('reactorStatusText');
+                statusText.classList.remove('stopped');
+                statusText.textContent = 'ONLINE';
+
+                // Update all energy beams
+                const energyBeams = document.querySelectorAll('.energy-beam');
+                energyBeams.forEach(beam => beam.classList.remove('stopped'));
+
+                // Update all energy rings
+                const energyRings = document.querySelectorAll('.energy-ring');
+                energyRings.forEach(ring => ring.classList.remove('stopped'));
+
+                // Update all particles
+                const particles = document.querySelectorAll('.particle');
+                particles.forEach(particle => particle.classList.remove('stopped'));
+
+                // Add startup sound effect (optional)
+                this.playReactorSound('startup');
+            }
+
+            deactivateReactor() {
+                // Update control panel background
+                const controlPanel = document.getElementById('controlPanel');
+                controlPanel.classList.remove('reactor-running');
+
+                // Update reactor core
+                const reactorCore = document.getElementById('reactorCore');
+                reactorCore.classList.add('stopped');
+
+                // Update status text
+                const statusText = document.getElementById('reactorStatusText');
+                statusText.classList.add('stopped');
+                statusText.textContent = 'OFFLINE';
+
+                // Update all energy beams
+                const energyBeams = document.querySelectorAll('.energy-beam');
+                energyBeams.forEach(beam => beam.classList.add('stopped'));
+
+                // Update all energy rings
+                const energyRings = document.querySelectorAll('.energy-ring');
+                energyRings.forEach(ring => ring.classList.add('stopped'));
+
+                // Update all particles
+                const particles = document.querySelectorAll('.particle');
+                particles.forEach(particle => particle.classList.add('stopped'));
+
+                // Add shutdown sound effect (optional)
+                this.playReactorSound('shutdown');
+            }
+
+            playReactorSound(type) {
+                // Optional: Add reactor sound effects
+                // You can uncomment this if you want to add audio feedback
+                /*
+                try {
+                    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                    if (type === 'startup') {
+                        // Create startup sound - rising frequency
+                        this.createReactorTone(audioContext, 200, 600, 1.5);
+                    } else if (type === 'shutdown') {
+                        // Create shutdown sound - falling frequency
+                        this.createReactorTone(audioContext, 600, 200, 1.0);
+                    }
+                } catch (error) {
+                    console.log('Audio not supported:', error);
+                }
+                */
+            }
+
+            createReactorTone(audioContext, startFreq, endFreq, duration) {
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                
+                oscillator.type = 'sine';
+                oscillator.frequency.setValueAtTime(startFreq, audioContext.currentTime);
+                oscillator.frequency.exponentialRampToValueAtTime(endFreq, audioContext.currentTime + duration);
+                
+                gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + duration);
+                
+                oscillator.start(audioContext.currentTime);
+                oscillator.stop(audioContext.currentTime + duration);
+            }
+
+            updatePerformanceDisplay(data) {
+                document.getElementById('avgConfidence').textContent = 
+                    Math.round((data.average_confidence || 0) * 100) + '%';
+                document.getElementById('avgRiskReward').textContent = 
+                    '1:' + (data.average_risk_reward || 0).toFixed(1);
+                
+                // Get top signal type
+                const signalTypes = data.signal_types_distribution || {};
+                const topType = Object.keys(signalTypes).reduce((a, b) => 
+                    signalTypes[a] > signalTypes[b] ? a : b, 'N/A');
+                document.getElementById('topSignalType').textContent = topType;
+                
+                // Get top symbol
+                const symbolDist = data.symbol_distribution || {};
+                const topSymbol = Object.keys(symbolDist).reduce((a, b) => 
+                    symbolDist[a] > symbolDist[b] ? a : b, 'N/A');
+                document.getElementById('topSymbol').textContent = topSymbol;
+            }
+
+            updateActiveSignalsDisplay(signals) {
+                const container = document.getElementById('activeSignalsList');
+                
+                if (!signals || signals.length === 0) {
+                    container.innerHTML = '<p style="text-align: center; color: #b8c5e1;">No active signals</p>';
+                    return;
+                }
+                
+                container.innerHTML = signals.map(signal => `
+                    <div class="signal-item">
+                        <div class="signal-header">
+                            <div>
+                                <span class="signal-type">${signal.signal_type.replace('_', ' ').toUpperCase()}</span>
+                                <strong style="margin-left: 1rem;">${signal.symbol}</strong>
+                            </div>
+                            <div class="signal-confidence">
+                                Confidence: ${Math.round(signal.confidence * 100)}%
+                            </div>
+                        </div>
+                        <div class="signal-details">
+                            Entry: ${signal.entry_price.toFixed(5)} | 
+                            SL: ${signal.stop_loss.toFixed(5)} | 
+                            TP: ${signal.take_profit.toFixed(5)} | 
+                            R:R = 1:${signal.risk_reward_ratio.toFixed(1)}
+                        </div>
+                        <div class="signal-details" style="margin-top: 0.5rem; font-size: 0.8rem;">
+                            Generated: ${new Date(signal.timestamp).toLocaleString()}
+                        </div>
+                    </div>
+                `).join('');
+            }
+
+            updateRecentAlertsDisplay(alerts) {
+                const container = document.getElementById('recentAlerts');
+                
+                if (!alerts || alerts.length === 0) {
+                    container.innerHTML = '<p style="text-align: center; color: #b8c5e1;">No recent alerts</p>';
+                    return;
+                }
+                
+                // Show last 5 alerts
+                const recentAlerts = alerts.slice(-5).reverse();
+                
+                container.innerHTML = recentAlerts.map(alert => {
+                    const signal = alert.signal;
+                    const time = new Date(alert.timestamp).toLocaleTimeString();
+                    return `
+                        <div style="margin-bottom: 0.5rem; padding: 0.5rem; background: rgba(255,255,255,0.05); border-radius: 4px;">
+                            <div style="font-weight: bold; color: #4ecdc4;">${signal.symbol} - ${signal.signal_type.replace('_', ' ')}</div>
+                            <div style="font-size: 0.8rem; color: #b8c5e1;">${time} - Confidence: ${Math.round(signal.confidence * 100)}%</div>
+                        </div>
+                    `;
+                }).join('');
+            }
+
+            updateSettingsDisplay(settings) {
+                document.getElementById('autoTradingEnabled').checked = settings.auto_trading_enabled || false;
+                document.getElementById('alertNotifications').checked = settings.alert_notifications !== false;
+                
+                const riskSettings = settings.risk_management || {};
+                document.getElementById('maxRiskPerTrade').value = riskSettings.max_risk_per_trade || 2.0;
+                document.getElementById('maxDailyDrawdown').value = riskSettings.max_daily_drawdown || 5.0;
+                document.getElementById('defaultRiskReward').value = riskSettings.default_risk_reward || 2.0;
+                
+                const signalSettings = settings.signal_filters || {};
+                const confidence = Math.round((signalSettings.min_confidence || 0.7) * 100);
+                document.getElementById('minConfidence').value = confidence;
+                document.getElementById('minConfidenceValue').textContent = confidence + '%';
+            }
+
+            collectSettingsFromForm() {
+                return {
+                    auto_trading_enabled: document.getElementById('autoTradingEnabled').checked,
+                    alert_notifications: document.getElementById('alertNotifications').checked,
+                    risk_management: {
+                        max_risk_per_trade: parseFloat(document.getElementById('maxRiskPerTrade').value),
+                        max_daily_drawdown: parseFloat(document.getElementById('maxDailyDrawdown').value),
+                        default_risk_reward: parseFloat(document.getElementById('defaultRiskReward').value)
+                    },
+                    signal_filters: {
+                        min_confidence: parseInt(document.getElementById('minConfidence').value) / 100
+                    }
+                };
+            }
+
+            updateControlButtons(isRunning) {
+                this.isRunning = isRunning;
+                document.getElementById('startBtn').disabled = isRunning;
+                document.getElementById('stopBtn').disabled = !isRunning;
+            }
+
+            showAlert(message, type) {
+                const container = document.getElementById('alertContainer');
+                const alert = document.createElement('div');
+                alert.className = `alert alert-${type}`;
+                alert.innerHTML = `
+                    <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'warning' ? 'exclamation-triangle' : 'exclamation-circle'}"></i>
+                    ${message}
+                `;
+                
+                container.appendChild(alert);
+                
+                // Auto-remove after 5 seconds
+                setTimeout(() => {
+                    if (alert.parentNode) {
+                        alert.parentNode.removeChild(alert);
+                    }
+                }, 5000);
+            }
+
+            startAutoRefresh() {
+                // Refresh status every 30 seconds if running
+                this.refreshInterval = setInterval(() => {
+                    if (this.isRunning) {
+                        this.loadStatus();
+                        this.loadTradeSetups();
+                    }
+                }, 30000);
+            }
+
+            async loadTradeSetups() {
+                try {
+                    const response = await fetch('/api/smc/status');
+                    const result = await response.json();
+                    
+                    if (result.success) {
+                        this.smcData = result;
+                        this.updateTradeSetupsDisplay(result.trade_setups || []);
+                        this.updateMarketStructureDisplay(result.market_structure || {});
+                        this.updateSetupStatistics(result.summary || {});
+                        this.updateSymbolFilter(result.trade_setups || []);
+                        
+                        // Check for new ready setups
+                        this.checkForNewReadySetups(result.trade_setups || []);
+                    }
+                } catch (error) {
+                    console.error('Error loading trade setups:', error);
+                    document.getElementById('trade-setups-container').innerHTML = 
+                        '<p style="text-align: center; color: #ff6b6b;">Error loading trade setups</p>';
+                }
+            }
+
+            updateTradeSetupsDisplay(setups) {
+                const container = document.getElementById('trade-setups-container');
+                const noSetupsDiv = document.getElementById('no-setups');
+                
+                if (!setups || setups.length === 0) {
+                    container.innerHTML = '';
+                    noSetupsDiv.classList.remove('hidden');
+                    return;
+                }
+
+                noSetupsDiv.classList.add('hidden');
+                container.innerHTML = setups.map(setup => this.createSetupCard(setup)).join('');
+            }
+
+            createSetupCard(setup) {
+                const isReady = setup.status === 'ready_for_entry';
+                const readyClass = isReady ? 'ready-for-entry' : '';
+                const confidenceClass = this.getConfidenceClass(setup.confidence);
+                // Enhanced signal type display
+                let signalTypeBadge = '';
+                let signalTypeClass = '';
+                
+                if (setup.setup_type === 'htf_retracement' || (setup.zone_info && setup.zone_info.signal_name && setup.zone_info.signal_name.includes('HTF'))) {
+                    signalTypeBadge = 'HTF RETRACEMENT';
+                    signalTypeClass = 'signal-htf-retracement';
+                } else if (setup.zone_info && setup.zone_info.signal_name) {
+                    signalTypeBadge = setup.zone_info.signal_name.replace(/_/g, ' ');
+                    signalTypeClass = `signal-enhanced`;
+                } else {
+                    signalTypeBadge = this.formatSignalType(setup.signal_type);
+                    signalTypeClass = `signal-${setup.signal_type}`;
+                }
+                
+                return `
+                    <div class="setup-card ${readyClass}" data-setup-id="${setup.setup_id}">
+                        <div class="setup-header">
+                            <div>
+                                <span class="setup-symbol">${setup.symbol}</span>
+                                <span class="setup-direction ${setup.direction}">${setup.direction.toUpperCase()}</span>
+                                <span class="signal-type-badge ${signalTypeClass}">
+                                    ${signalTypeBadge}
+                                </span>
+                                ${isReady ? '<span style="color: #4ecdc4; font-weight: bold; margin-left: 0.5rem;">⚡ READY</span>' : ''}
+                            </div>
+                            <div class="setup-actions">
+                                ${isReady ? `
+                                <button class="btn btn-execute" onclick="dashboard.executeSetup('${setup.setup_id}')">
+                                    <i class="fas fa-play"></i> Execute
+                                </button>
+                                ` : ''}
+                                <button class="btn btn-secondary" style="padding: 6px 12px; font-size: 0.8rem;" 
+                                        onclick="dashboard.viewSetupDetails('${setup.setup_id}')">
+                                    <i class="fas fa-info-circle"></i> Details
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="setup-prices">
+                            <div class="price-item">
+                                <div class="price-label">Entry</div>
+                                <div class="price-value">${setup.entry_price}</div>
+                            </div>
+                            <div class="price-item">
+                                <div class="price-label">Stop Loss</div>
+                                <div class="price-value">${setup.stop_loss}</div>
+                            </div>
+                            <div class="price-item">
+                                <div class="price-label">Take Profit</div>
+                                <div class="price-value">${setup.take_profit}</div>
+                            </div>
+                            <div class="price-item">
+                                <div class="price-label">R:R</div>
+                                <div class="price-value">1:${setup.risk_reward}</div>
+                            </div>
+                        </div>
+                        
+                        <div class="confidence-meter">
+                            <div class="confidence-fill ${confidenceClass}" 
+                                 style="width: ${setup.confidence * 100}%"></div>
+                        </div>
+                        <div style="font-size: 0.8rem; color: #b8c5e1;">
+                            Confidence: ${Math.round(setup.confidence * 100)}% | 
+                            Created: ${this.formatTime(setup.created_at)}
+                            ${setup.expires_at ? ` | Expires: ${this.formatTime(setup.expires_at)}` : ''}
+                        </div>
+                        
+                        ${setup.details ? this.createSetupDetails(setup) : ''}
+                    </div>
+                `;
+            }
+
+            createSetupDetails(setup) {
+                // Enhanced HTF signals
+                if (setup.setup_type === 'htf_retracement' || (setup.zone_info && setup.zone_info.signal_name && setup.zone_info.signal_name.includes('HTF'))) {
+                    const htfBias = setup.htf_bias || setup.zone_info?.htf_bias || 'Unknown';
+                    const structureType = setup.structure_type || setup.zone_info?.structure_type || 'Unknown';
+                    const setupQuality = setup.setup_quality || 'Unknown';
+                    const liquidityTaken = setup.liquidity_taken ? 'Yes' : 'No';
+                    
+                    return `
+                        <div class="setup-details">
+                            <strong>HTF Bias:</strong> ${htfBias.charAt(0).toUpperCase() + htfBias.slice(1)}<br>
+                            <strong>Structure:</strong> ${structureType.replace(/_/g, ' ')}<br>
+                            <strong>Quality:</strong> ${setupQuality.charAt(0).toUpperCase() + setupQuality.slice(1)}<br>
+                            <strong>Liquidity Taken:</strong> ${liquidityTaken}
+                        </div>
+                    `;
+                }
+                // Legacy order block signals  
+                else if (setup.signal_type === 'order_block' && setup.details) {
+                    return `
+                        <div class="setup-details">
+                            <strong>Order Block:</strong> ${setup.details.ob_range || 'N/A'}<br>
+                            <strong>Bias:</strong> ${setup.details.bias || 'N/A'}<br>
+                            <strong>Strength:</strong> ${setup.details.strength || 'N/A'}/10
+                        </div>
+                    `;
+                } 
+                // Enhanced basic signals
+                else if (setup.zone_info && setup.zone_info.signal_name) {
+                    const signalName = setup.zone_info.signal_name.replace(/_/g, ' ');
+                    const htfBias = setup.zone_info.htf_bias || 'Unknown';
+                    const confidence = setup.confidence ? Math.round(setup.confidence * 100) + '%' : 'N/A';
+                    
+                    return `
+                        <div class="setup-details">
+                            <strong>Signal:</strong> ${signalName}<br>
+                            <strong>Bias:</strong> ${htfBias.charAt(0).toUpperCase() + htfBias.slice(1)}<br>
+                            <strong>Confidence:</strong> ${confidence}
+                        </div>
+                    `;
+                }
+                // FVG signals
+                else if (setup.signal_type === 'fvg' && setup.details) {
+                    return `
+                        <div class="setup-details">
+                            <strong>FVG Range:</strong> ${setup.details.fvg_range}<br>
+                            <strong>Gap Size:</strong> ${setup.details.gap_size} pips<br>
+                            <strong>Fill %:</strong> ${setup.details.fill_percentage}%
+                        </div>
+                    `;
+                }
+                return '';
+            }
+
+            updateMarketStructureDisplay(structure) {
+                const container = document.getElementById('market-structure-container');
+                
+                if (!structure || Object.keys(structure).length === 0) {
+                    container.innerHTML = '<p style="text-align: center; color: #b8c5e1;">No market structure data available</p>';
+                    return;
+                }
+                
+                container.innerHTML = Object.entries(structure).map(([symbol, data]) => `
+                    <div class="market-structure-visual" style="border: 1px solid #4ecdc4; border-radius: 8px; padding: 1rem; margin-bottom: 1rem; background: rgba(78, 205, 196, 0.05);">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                            <h6 style="color: #4ecdc4; margin: 0; font-size: 1.1rem; font-weight: bold;">${symbol}</h6>
+                            <span style="color: #b8c5e1; font-size: 0.8rem;">${data.last_updated || 'Live'}</span>
+                        </div>
+                        
+                        ${data.current_price ? `
+                        <div style="margin-bottom: 0.8rem; text-align: center;">
+                            <span style="color: #ffffff; font-size: 1.2rem; font-weight: bold;">
+                                ${data.current_price}
+                            </span>
+                            <span style="color: #4ecdc4; font-size: 0.9rem; margin-left: 0.5rem;">LIVE</span>
+                        </div>
+                        ` : ''}
+                        
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 0.8rem;">
+                            <div>
+                                <span style="color: #b8c5e1; font-size: 0.85rem;">Trend:</span><br>
+                                <span class="trend-indicator trend-${data.trend}" style="
+                                    padding: 2px 8px; 
+                                    border-radius: 12px; 
+                                    font-size: 0.8rem; 
+                                    font-weight: bold;
+                                    background: ${data.trend === 'bullish' ? '#28a745' : data.trend === 'bearish' ? '#dc3545' : '#6c757d'};
+                                    color: white;
+                                ">${data.trend.toUpperCase()}</span>
+                            </div>
+                            <div>
+                                <span style="color: #b8c5e1; font-size: 0.85rem;">Structure:</span><br>
+                                <span style="color: #ffffff; font-size: 0.9rem;">${data.structure || 'N/A'}</span>
+                            </div>
+                        </div>
+                        
+                        ${data.swing_highs && data.swing_highs.length > 0 ? `
+                        <div style="margin-bottom: 0.5rem;">
+                            <small style="color: #b8c5e1; font-size: 0.8rem;">📈 Recent Swing Highs:</small><br>
+                            <div style="display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 0.3rem;">
+                                ${data.swing_highs.slice(0, 3).map(sh => 
+                                    `<span class="swing-point" style="
+                                        background: rgba(40, 167, 69, 0.2); 
+                                        color: #28a745; 
+                                        padding: 2px 6px; 
+                                        border-radius: 4px; 
+                                        font-size: 0.75rem;
+                                        border: 1px solid #28a745;
+                                    ">${sh.price}</span>`
+                                ).join('')}
+                            </div>
+                        </div>
+                        ` : ''}
+                        
+                        ${data.swing_lows && data.swing_lows.length > 0 ? `
+                        <div>
+                            <small style="color: #b8c5e1; font-size: 0.8rem;">📉 Recent Swing Lows:</small><br>
+                            <div style="display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 0.3rem;">
+                                ${data.swing_lows.slice(0, 3).map(sl => 
+                                    `<span class="swing-point" style="
+                                        background: rgba(220, 53, 69, 0.2); 
+                                        color: #dc3545; 
+                                        padding: 2px 6px; 
+                                        border-radius: 4px; 
+                                        font-size: 0.75rem;
+                                        border: 1px solid #dc3545;
+                                    ">${sl.price}</span>`
+                                ).join('')}
+                            </div>
+                        </div>
+                        ` : ''}
+                    </div>
+                `).join('');
+            }
+
+            updateSetupStatistics(summary) {
+                document.getElementById('ready-entries').textContent = summary.ready_entries || 0;
+                document.getElementById('avg-setup-confidence').textContent = 
+                    Math.round((summary.avg_confidence || 0) * 100) + '%';
+                document.getElementById('trades-executed').textContent = summary.trades_executed || 0;
+                document.getElementById('success-rate').textContent = (summary.success_rate || 0) + '%';
+            }
+
+            updateSymbolFilter(setups) {
+                const filter = document.getElementById('symbol-filter');
+                const symbols = [...new Set(setups.map(setup => setup.symbol))];
+                
+                const currentValue = filter.value;
+                filter.innerHTML = '<option value="">All Symbols</option>';
+                
+                symbols.forEach(symbol => {
+                    const option = document.createElement('option');
+                    option.value = symbol;
+                    option.textContent = symbol;
+                    filter.appendChild(option);
+                });
+                
+                if (symbols.includes(currentValue)) {
+                    filter.value = currentValue;
+                }
+            }
+
+            filterTradeSetups() {
+                const symbolFilter = document.getElementById('symbol-filter').value;
+                const typeFilter = document.getElementById('signal-type-filter').value;
+                
+                if (!this.smcData || !this.smcData.trade_setups) return;
+                
+                let filtered = this.smcData.trade_setups.filter(setup => {
+                    if (symbolFilter && setup.symbol !== symbolFilter) return false;
+                    if (typeFilter && setup.signal_type !== typeFilter) return false;
+                    return true;
+                });
+                
+                this.updateTradeSetupsDisplay(filtered);
+            }
+
+            async executeSetup(setupId) {
+                if (!confirm('Execute this trade setup?')) return;
+
+                try {
+                    this.showAlert('🔄 Executing trade setup...', 'warning');
+                    
+                    const response = await fetch(`/api/smc-automation/execute-setup/${setupId}`, {
+                        method: 'POST'
+                    });
+                    const result = await response.json();
+
+                    if (result.success) {
+                        this.showAlert(`✅ Trade executed successfully: ${result.trade_id}`, 'success');
+                        this.loadTradeSetups();
+                        this.loadStatus(); // Refresh overall status
+                    } else {
+                        this.showAlert(`❌ Failed to execute trade: ${result.error}`, 'danger');
+                    }
+                } catch (error) {
+                    console.error('Error executing setup:', error);
+                    this.showAlert('❌ Connection error during execution', 'danger');
+                }
+            }
+
+            viewSetupDetails(setupId) {
+                const setup = this.smcData?.trade_setups?.find(s => s.setup_id === setupId);
+                if (!setup) return;
+                
+                const detailsHtml = `
+                    <strong>Setup Details:</strong><br>
+                    ID: ${setup.setup_id}<br>
+                    Symbol: ${setup.symbol}<br>
+                    Direction: ${setup.direction.toUpperCase()}<br>
+                    Signal Type: ${this.formatSignalType(setup.signal_type)}<br>
+                    Status: ${setup.status}<br>
+                    Confidence: ${Math.round(setup.confidence * 100)}%<br>
+                    Entry: ${setup.entry_price}<br>
+                    Stop Loss: ${setup.stop_loss}<br>
+                    Take Profit: ${setup.take_profit}<br>
+                    Risk/Reward: 1:${setup.risk_reward}<br>
+                    Created: ${this.formatTime(setup.created_at)}<br>
+                    ${setup.expires_at ? `Expires: ${this.formatTime(setup.expires_at)}<br>` : ''}
+                    ${setup.details ? JSON.stringify(setup.details, null, 2) : ''}
+                `;
+                
+                this.showAlert(detailsHtml, 'info');
+            }
+
+            checkForNewReadySetups(setups) {
+                if (!setups) return;
+                
+                const readySetups = setups.filter(setup => 
+                    setup.status === 'ready_for_entry' && setup.is_new
+                );
+
+                readySetups.forEach(setup => {
+                    this.showAlert(
+                        `🎯 NEW SETUP READY: ${setup.symbol} ${setup.direction.toUpperCase()} - ${this.formatSignalType(setup.signal_type)}`,
+                        'success'
+                    );
+
+                    // Auto-execute if enabled and high confidence
+                    if (this.autoExecute && setup.confidence >= 0.75) {
+                        setTimeout(() => this.executeSetup(setup.setup_id), 1000);
+                    }
+                });
+            }
+
+            getConfidenceClass(confidence) {
+                if (confidence >= 0.8) return 'confidence-excellent';
+                if (confidence >= 0.6) return 'confidence-good';
+                return 'confidence-fair';
+            }
+
+            formatSignalType(type) {
+                return type.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+            }
+
+            formatTime(timestamp) {
+                return new Date(timestamp).toLocaleString();
+            }
+
+            resetSettings() {
+                if (confirm('Reset all settings to defaults?')) {
+                    document.getElementById('autoTradingEnabled').checked = false;
+                    document.getElementById('alertNotifications').checked = true;
+                    document.getElementById('maxRiskPerTrade').value = 2.0;
+                    document.getElementById('maxDailyDrawdown').value = 5.0;
+                    document.getElementById('defaultRiskReward').value = 2.0;
+                    document.getElementById('minConfidence').value = 70;
+                    document.getElementById('minConfidenceValue').textContent = '70%';
+                }
+            }
+        }
+
+        // Initialize dashboard when page loads
+        let dashboard;
+        document.addEventListener('DOMContentLoaded', () => {
+            dashboard = new SMCAutomationDashboard();
+        });
+    </script>
+    </main>
+</body>
+</html> 

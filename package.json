@@ -1,0 +1,131 @@
+{
+  "name": "qnti-desktop",
+  "productName": "QNTI Trading System",
+  "version": "1.0.0",
+  "description": "Quantum Nexus Trading Intelligence - Professional Desktop Trading System",
+  "main": "src/main.js",
+  "author": {
+    "name": "Quantum Nexus Trading Intelligence",
+    "email": "support@qnti.com"
+  },
+  "license": "MIT",
+  "homepage": "https://github.com/your-org/qnti-trading-system",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/your-org/qnti-trading-system.git"
+  },
+  "scripts": {
+    "start": "electron .",
+    "dev": "electron . --dev",
+    "build": "electron-builder",
+    "build:win": "electron-builder --win",
+    "build:mac": "electron-builder --mac",
+    "build:linux": "electron-builder --linux",
+    "dist": "npm run build",
+    "pack": "electron-builder --dir",
+    "postinstall": "electron-builder install-app-deps",
+    "rebuild": "electron-rebuild",
+    "test": "echo \"No tests specified\" && exit 0"
+  },
+  "devDependencies": {
+    "electron": "^28.2.0",
+    "electron-builder": "^24.9.1",
+    "electron-rebuild": "^3.2.9"
+  },
+  "dependencies": {
+    "electron-log": "^5.0.1",
+    "electron-updater": "^6.1.7",
+    "electron-store": "^8.1.0",
+    "node-fetch": "^3.3.2",
+    "ws": "^8.16.0"
+  },
+  "build": {
+    "appId": "com.qnti.desktop",
+    "productName": "QNTI Trading System",
+    "artifactName": "${productName}-${version}-${arch}.${ext}",
+    "directories": {
+      "output": "dist-electron",
+      "buildResources": "build"
+    },
+    "files": [
+      "src/**/*",
+      "node_modules/**/*",
+      "qnti_main_system.py",
+      "qnti_core_system.py",
+      "qnti_mt5_integration.py",
+      "qnti_vision_analysis.py",
+      "qnti_web_interface.py",
+      "qnti_llm_mcp_integration.py",
+      "*.json",
+      "dashboard/**/*",
+      "qnti_reports/**/*"
+    ],
+    "extraFiles": [
+      {
+        "from": "python-runtime",
+        "to": "python-runtime",
+        "filter": ["**/*"]
+      }
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": ["x64"]
+        },
+        {
+          "target": "portable",
+          "arch": ["x64"]
+        }
+      ],
+      "icon": "build/icon.ico",
+      "requestedExecutionLevel": "asInvoker",
+      "publisherName": "Quantum Nexus Trading Intelligence"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "allowElevation": true,
+      "installerIcon": "build/icon.ico",
+      "uninstallerIcon": "build/icon.ico",
+      "installerHeaderIcon": "build/icon.ico",
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "menuCategory": "Trading Software",
+      "runAfterFinish": true,
+      "shortcutName": "QNTI Trading System"
+    },
+    "mac": {
+      "target": [
+        {
+          "target": "dmg",
+          "arch": ["x64", "arm64"]
+        }
+      ],
+      "icon": "build/icon.icns",
+      "category": "public.app-category.finance"
+    },
+    "linux": {
+      "target": [
+        {
+          "target": "AppImage",
+          "arch": ["x64"]
+        },
+        {
+          "target": "deb",
+          "arch": ["x64"]
+        }
+      ],
+      "icon": "build/icon.png",
+      "category": "Office"
+    },
+    "publish": {
+      "provider": "github",
+      "owner": "your-org",
+      "repo": "qnti-trading-system"
+    }
+  },
+  "engines": {
+    "node": ">=16.0.0"
+  }
+} 

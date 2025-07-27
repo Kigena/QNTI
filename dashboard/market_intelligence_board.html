@@ -1,0 +1,1269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QNTI Market Intelligence Board</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/4.3.0/marked.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            color: #e2e8f0;
+            min-height: 100vh;
+            display: flex;
+        }
+
+        /* Sidebar Navigation */
+        .sidebar {
+            width: 280px;
+            background: rgba(15, 23, 42, 0.95);
+            backdrop-filter: blur(10px);
+            border-right: 1px solid #334155;
+            height: 100vh;
+            position: fixed;
+            left: 0;
+            top: 0;
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+        }
+
+        .sidebar-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid #334155;
+        }
+
+        .logo {
+            font-size: 1.3rem;
+            font-weight: bold;
+            background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-align: center;
+        }
+
+        .sidebar-content {
+            flex: 1;
+            padding: 1rem 0;
+        }
+
+        .nav-section {
+            margin-bottom: 2rem;
+        }
+
+        .nav-section-title {
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            padding: 0 1.5rem 0.5rem 1.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .nav-link {
+            color: #94a3b8;
+            text-decoration: none;
+            padding: 0.75rem 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            transition: all 0.2s;
+            border-left: 3px solid transparent;
+        }
+
+        .nav-link:hover {
+            background: rgba(100, 116, 139, 0.1);
+            color: #f1f5f9;
+            border-left-color: #3b82f6;
+        }
+
+        .nav-link.active {
+            background: rgba(59, 130, 246, 0.1);
+            color: #3b82f6;
+            border-left-color: #3b82f6;
+        }
+
+        .nav-icon {
+            font-size: 1.2rem;
+            width: 20px;
+            text-align: center;
+        }
+
+        /* Sidebar Toggle */
+        .sidebar-toggle {
+            position: fixed;
+            top: 1rem;
+            left: 1rem;
+            z-index: 200;
+            background: rgba(30, 41, 59, 0.9);
+            border: 1px solid #475569;
+            border-radius: 8px;
+            padding: 0.75rem;
+            color: #f1f5f9;
+            cursor: pointer;
+            font-size: 1.2rem;
+            transition: all 0.3s ease;
+            display: block;
+        }
+
+        .sidebar-toggle.collapsed {
+            left: 1rem;
+        }
+
+        .sidebar-toggle:hover {
+            background: rgba(59, 130, 246, 0.2);
+            border-color: #3b82f6;
+        }
+
+        /* Main Content Area */
+        .main-content {
+            flex: 1;
+            margin-left: 280px;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        /* Sidebar Collapsed State */
+        .sidebar.collapsed {
+            transform: translateX(-280px);
+        }
+
+        .main-content.sidebar-collapsed {
+            margin-left: 0;
+        }
+
+        /* Mobile Responsive */
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-280px);
+                transition: transform 0.3s ease;
+            }
+
+            .sidebar.mobile-open {
+                transform: translateX(0);
+            }
+
+            .main-content {
+                margin-left: 0;
+            }
+
+            .sidebar-toggle {
+                display: block;
+            }
+        }
+
+        /* Main Content Area */
+        .main-content {
+            flex: 1;
+            margin-left: 280px;
+            min-height: 100vh;
+            background: transparent;
+        }
+
+        .main-header {
+            background: rgba(15, 23, 42, 0.8);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid #334155;
+            padding: 1rem 2rem;
+            position: sticky;
+            top: 0;
+            z-index: 50;
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .page-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #f1f5f9;
+        }
+
+        .status-indicators {
+            display: flex;
+            gap: 1.5rem;
+            align-items: center;
+        }
+
+        .status-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.2rem;
+        }
+
+        .status-item > span:first-child {
+            font-weight: 600;
+            font-size: 1.1rem;
+            color: #f1f5f9;
+        }
+
+        /* Remove old header styles - using sidebar navigation instead */
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #06d6a0;
+        }
+
+        .stat-label {
+            font-size: 0.8rem;
+            color: #94a3b8;
+        }
+
+        .refresh-indicator {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: #06d6a0;
+            font-size: 0.9rem;
+        }
+
+        .spinner {
+            width: 16px;
+            height: 16px;
+            border: 2px solid #334155;
+            border-top: 2px solid #06d6a0;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .main-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+            display: grid;
+            grid-template-columns: 1fr 350px;
+            gap: 2rem;
+        }
+
+        .insights-board {
+            background: rgba(30, 41, 59, 0.6);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            border: 1px solid #334155;
+            overflow: hidden;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+
+        .board-header {
+            background: linear-gradient(135deg, #1e293b, #334155);
+            padding: 1.5rem 2rem;
+            border-bottom: 1px solid #475569;
+        }
+
+        .board-header h2 {
+            color: #f1f5f9;
+            font-size: 1.4rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .board-subtitle {
+            color: #94a3b8;
+            font-size: 0.9rem;
+        }
+
+        .insights-container {
+            height: calc(100vh - 250px);
+            overflow-y: auto;
+            padding: 1rem;
+        }
+
+        .insight-card {
+            background: rgba(51, 65, 85, 0.7);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            border-left: 4px solid #06d6a0;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+            transition: all 0.3s ease;
+            animation: slideInRight 0.5s ease-out;
+        }
+
+        .insight-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+        }
+
+        .insight-card.high-priority {
+            border-left-color: #ef4444;
+            background: rgba(239, 68, 68, 0.1);
+        }
+
+        .insight-card.medium-priority {
+            border-left-color: #f59e0b;
+            background: rgba(245, 158, 11, 0.1);
+        }
+
+        .insight-card.critical-priority {
+            border-left-color: #dc2626;
+            background: rgba(220, 38, 38, 0.15);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes slideInRight {
+            from {
+                opacity: 0;
+                transform: translateX(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+            }
+            50% {
+                box-shadow: 0 4px 16px rgba(220, 38, 38, 0.4);
+            }
+        }
+
+        .insight-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 1rem;
+        }
+
+        .insight-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #f1f5f9;
+            line-height: 1.3;
+        }
+
+        .insight-badges {
+            display: flex;
+            gap: 0.5rem;
+            flex-shrink: 0;
+        }
+
+        .badge {
+            padding: 0.3rem 0.8rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .badge.symbol {
+            background: rgba(59, 130, 246, 0.3);
+            color: #93c5fd;
+            border: 1px solid #3b82f6;
+        }
+
+        .badge.confidence {
+            background: rgba(6, 214, 160, 0.3);
+            color: #06d6a0;
+            border: 1px solid #06d6a0;
+        }
+
+        .insight-message {
+            color: #cbd5e1;
+            line-height: 1.6;
+            margin-bottom: 1rem;
+        }
+
+        .insight-action {
+            background: rgba(6, 214, 160, 0.1);
+            border: 1px solid #06d6a0;
+            border-radius: 8px;
+            padding: 0.8rem;
+            margin-top: 1rem;
+            font-size: 0.9rem;
+            color: #06d6a0;
+        }
+
+        .insight-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid #475569;
+            font-size: 0.8rem;
+            color: #94a3b8;
+        }
+
+        .insight-time {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .risk-indicator {
+            padding: 0.3rem 0.8rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .risk-low {
+            background: rgba(34, 197, 94, 0.3);
+            color: #22c55e;
+        }
+
+        .risk-medium {
+            background: rgba(245, 158, 11, 0.3);
+            color: #f59e0b;
+        }
+
+        .risk-high {
+            background: rgba(239, 68, 68, 0.3);
+            color: #ef4444;
+        }
+
+        .content-sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+        }
+
+        .analysis-panel, .quick-stats {
+            background: rgba(30, 41, 59, 0.6);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            border: 1px solid #334155;
+            padding: 1.5rem;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+
+        .panel-title {
+            color: #f1f5f9;
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .stat-card {
+            background: rgba(51, 65, 85, 0.5);
+            border-radius: 8px;
+            padding: 1rem;
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #06d6a0;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-description {
+            color: #94a3b8;
+            font-size: 0.8rem;
+        }
+
+        .filter-controls {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .filter-btn {
+            padding: 0.5rem 1rem;
+            border: 1px solid #475569;
+            background: rgba(51, 65, 85, 0.5);
+            color: #cbd5e1;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.8rem;
+        }
+
+        .filter-btn:hover, .filter-btn.active {
+            background: #06d6a0;
+            color: #0f172a;
+            border-color: #06d6a0;
+        }
+
+        .symbol-summary {
+            display: grid;
+            gap: 0.5rem;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .symbol-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.5rem;
+            background: rgba(51, 65, 85, 0.3);
+            border-radius: 6px;
+            font-size: 0.9rem;
+        }
+
+        .symbol-name {
+            font-weight: 600;
+            color: #f1f5f9;
+        }
+
+        .symbol-alerts {
+            background: rgba(239, 68, 68, 0.3);
+            color: #ef4444;
+            padding: 0.2rem 0.6rem;
+            border-radius: 12px;
+            font-size: 0.75rem;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 3rem 2rem;
+            color: #94a3b8;
+        }
+
+        .empty-state-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+
+        /* Market Data Panel Styles */
+        .market-data-panel {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .market-item {
+            padding: 0.75rem;
+            border-bottom: 1px solid #334155;
+            transition: all 0.2s;
+        }
+
+        .market-item:hover {
+            background: rgba(59, 130, 246, 0.05);
+        }
+
+        .market-symbol {
+            font-weight: 600;
+            color: #f1f5f9;
+            font-size: 0.9rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .market-price {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.25rem;
+        }
+
+        .market-value {
+            font-weight: 500;
+            color: #e2e8f0;
+        }
+
+        .market-change {
+            font-size: 0.8rem;
+            font-weight: 500;
+            padding: 0.125rem 0.375rem;
+            border-radius: 4px;
+        }
+
+        .market-change.positive {
+            background: rgba(16, 185, 129, 0.2);
+            color: #10b981;
+        }
+
+        .market-change.negative {
+            background: rgba(239, 68, 68, 0.2);
+            color: #ef4444;
+        }
+
+        .market-technical {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 0.25rem;
+            font-size: 0.75rem;
+        }
+
+        .tech-indicator {
+            padding: 0.125rem 0.25rem;
+            border-radius: 3px;
+            background: rgba(71, 85, 105, 0.3);
+            color: #94a3b8;
+        }
+
+        .tech-indicator.overbought {
+            background: rgba(239, 68, 68, 0.2);
+            color: #fca5a5;
+        }
+
+        .tech-indicator.oversold {
+            background: rgba(16, 185, 129, 0.2);
+            color: #6ee7b7;
+        }
+
+        .market-update-status {
+            text-align: center;
+            padding: 0.5rem;
+            font-size: 0.75rem;
+            color: #64748b;
+            border-top: 1px solid #334155;
+        }
+
+        @media (max-width: 768px) {
+            .main-container {
+                grid-template-columns: 1fr;
+                padding: 1rem;
+            }
+            
+            .header-content {
+                flex-direction: column;
+                gap: 1rem;
+            }
+            
+            .intelligence-stats {
+                flex-direction: column;
+                gap: 1rem;
+            }
+            
+            .content-sidebar {
+                width: 100%;
+                margin-top: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Sidebar Toggle Button -->
+    <button class="sidebar-toggle" id="sidebarToggle">☰</button>
+
+    <!-- Sidebar Navigation -->
+    <nav class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <div class="logo">Quantum Nexus Trading Intelligence</div>
+        </div>
+        
+        <div class="sidebar-content">
+            <div class="nav-section">
+                <div class="nav-section-title">Main</div>
+                <a href="main_dashboard.html" class="nav-link">
+                    <span class="nav-icon">📊</span>
+                    <span>Dashboard</span>
+                </a>
+                <a href="vision_trading_charts.html" class="nav-link">
+                    <span class="nav-icon">👁️</span>
+                    <span>Vision Trading</span>
+                </a>
+            </div>
+
+            <div class="nav-section">
+                <div class="nav-section-title">Trading</div>
+                <a href="trading_center.html" class="nav-link">
+                    <span class="nav-icon">📈</span>
+                    <span>Trading Center</span>
+                </a>
+                <a href="#" class="nav-link active">
+                    <span class="nav-icon">🧠</span>
+                    <span>Intelligence</span>
+                </a>
+                <a href="forex_advisor_chat.html" class="nav-link">
+                    <span class="nav-icon">💬</span>
+                    <span>Advisor Chat</span>
+                </a>
+                <a href="ea_management.html" class="nav-link">
+                    <span class="nav-icon">🤖</span>
+                    <span>EA Manager</span>
+                </a>
+                
+            </div>
+
+            <div class="nav-section">
+                <div class="nav-section-title">Analysis</div>
+                <a href="strategy_tester.html" class="nav-link">
+                    <span class="nav-icon">🧪</span>
+                    <span>Strategy Tester</span>
+                </a>
+                <a href="analytics_reports.html" class="nav-link">
+                    <span class="nav-icon">📊</span>
+                    <span>Analytics</span>
+                </a>
+            </div>
+
+            <div class="nav-section">
+                <div class="nav-section-title">Tools</div>
+                
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content Area -->
+    <main class="main-content">
+        <div class="main-header">
+            <div class="header-content">
+                <div class="page-title">🧠 Market Intelligence</div>
+                <div class="status-indicators">
+                    <div class="status-item">
+                        <span id="totalInsights">11</span>
+                        <span style="color: #64748b; font-size: 0.8rem;">Total Insights</span>
+                    </div>
+                    <div class="status-item">
+                        <span id="highPriorityCount">8</span>
+                        <span style="color: #64748b; font-size: 0.8rem;">High Priority</span>
+                    </div>
+                    <div class="status-item">
+                        <span id="activeSymbols">10</span>
+                        <span style="color: #64748b; font-size: 0.8rem;">Active Symbols</span>
+                    </div>
+                    <div class="status-item">
+                        <span style="color: #94a3b8; font-size: 0.8rem;">Updated</span>
+                        <span id="lastUpdate" style="color: #3b82f6; font-size: 0.8rem;">22:54:52</span>
+                    </div>
+                    <div class="status-item">
+                        <div id="refreshSpinner" style="display: none; color: #06d6a0;">🔄 Refreshing...</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Page Content -->
+        <div class="page-content">
+
+        <div class="main-container">
+            <div class="insights-board">
+                <div class="board-header">
+                    <h2>🎯 Live Market Insights</h2>
+                    <p class="board-subtitle">AI-powered real-time market analysis and trading opportunities</p>
+                    
+                    <div class="filter-controls">
+                        <button class="filter-btn active" data-filter="all">All</button>
+                        <button class="filter-btn" data-filter="signal">Signals</button>
+                        <button class="filter-btn" data-filter="warning">Warnings</button>
+                        <button class="filter-btn" data-filter="opportunity">Opportunities</button>
+                        <button class="filter-btn" data-filter="trend">Trends</button>
+                        <button class="filter-btn" data-filter="high">High Priority</button>
+                    </div>
+                </div>
+                <div class="insights-container" id="insightsContainer">
+                    <div class="empty-state">
+                        <div class="empty-state-icon">🔍</div>
+                        <h3>Loading Market Intelligence...</h3>
+                        <p>AI is analyzing market data and generating insights</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="content-sidebar">
+                <div class="quick-stats">
+                    <h3 class="panel-title">📊 Quick Stats</h3>
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-number" id="todayInsights">0</div>
+                            <div class="stat-description">Insights Today</div>
+                            <div class="stat-details" id="todayInsightsDetails" style="font-size: 0.7rem; color: #64748b; margin-top: 0.2rem;">Displayable only</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-number" id="avgConfidence">0%</div>
+                            <div class="stat-description">Real Analysis</div>
+                            <div class="stat-details" id="avgConfidenceDetails" style="font-size: 0.7rem; color: #64748b; margin-top: 0.2rem;">Technical only</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-number" id="successRate">0%</div>
+                            <div class="stat-description">Trading Win Rate</div>
+                            <div class="stat-details" id="successRateDetails" style="font-size: 0.7rem; color: #64748b; margin-top: 0.2rem;">From MT5 account</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-number" id="activeAlerts">0</div>
+                            <div class="stat-description">High Priority</div>
+                            <div class="stat-details" id="activeAlertsDetails" style="font-size: 0.7rem; color: #64748b; margin-top: 0.2rem;">Critical & High</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="analysis-panel">
+                    <h3 class="panel-title">🎯 Live Market Data</h3>
+                    <div class="market-data-panel" id="marketDataPanel">
+                        <div style="text-align: center; color: #94a3b8; padding: 1rem;">
+                            Loading market data...
+                        </div>
+                    </div>
+                </div>
+
+                <div class="analysis-panel">
+                    <h3 class="panel-title">📈 Symbol Activity</h3>
+                    <div class="symbol-summary" id="symbolSummary">
+                        <!-- Symbol summaries will be loaded here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        class MarketIntelligenceBoard {
+            constructor() {
+                this.insights = [];
+                this.currentFilter = 'all';
+                this.refreshInterval = 30000; // 30 seconds
+                this.isRefreshing = false;
+                
+                this.initializeEventListeners();
+                this.startAutoRefresh();
+                this.loadInsights();
+            }
+
+            initializeEventListeners() {
+                // Filter buttons
+                document.querySelectorAll('.filter-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        this.setFilter(e.target.dataset.filter);
+                    });
+                });
+            }
+
+            setFilter(filter) {
+                this.currentFilter = filter;
+                
+                // Update button states
+                document.querySelectorAll('.filter-btn').forEach(btn => {
+                    btn.classList.toggle('active', btn.dataset.filter === filter);
+                });
+                
+                this.renderInsights();
+            }
+
+            async loadInsights() {
+                if (this.isRefreshing) return;
+                
+                this.isRefreshing = true;
+                this.showRefreshIndicator();
+                console.log('🔄 Loading insights from API...');
+                
+                try {
+                    const response = await fetch('/api/market-intelligence/insights');
+                    console.log('📡 API Response status:', response.status);
+                    
+                    if (response.ok) {
+                        const data = await response.json();
+                        console.log('📊 Raw API data received:', data);
+                        console.log('📈 Insights count:', data.insights ? data.insights.length : 'No insights property');
+                        console.log('🔍 First insight sample:', data.insights && data.insights[0] ? data.insights[0] : 'No first insight');
+                        
+                        this.insights = data.insights || [];
+                        console.log('💾 Stored insights count:', this.insights.length);
+                        
+                        this.updateStats(data.stats || {});
+                        this.renderInsights();
+                    } else {
+                        console.error('❌ Failed to load insights:', response.statusText);
+                    }
+                } catch (error) {
+                    console.error('💥 Error loading insights:', error);
+                } finally {
+                    this.isRefreshing = false;
+                    this.hideRefreshIndicator();
+                    this.updateLastRefreshTime();
+                }
+                
+                // Also load real-time market data
+                this.loadMarketData();
+            }
+
+            async loadMarketData() {
+                try {
+                    const response = await fetch('/api/market-intelligence/real-time-data');
+                    if (response.ok) {
+                        const data = await response.json();
+                        this.renderMarketData(data);
+                    } else {
+                        console.error('Failed to load market data:', response.statusText);
+                        this.renderMarketDataError();
+                    }
+                } catch (error) {
+                    console.error('Error loading market data:', error);
+                    this.renderMarketDataError();
+                }
+            }
+
+            renderMarketData(data) {
+                const container = document.getElementById('marketDataPanel');
+                
+                if (!data.success || !data.data || Object.keys(data.data).length === 0) {
+                    container.innerHTML = `
+                        <div style="text-align: center; color: #94a3b8; padding: 1rem;">
+                            <div>📊 Enhanced market data available</div>
+                            <div style="font-size: 0.8rem; margin-top: 0.5rem;">
+                                Install: <code style="background: rgba(59, 130, 246, 0.1); padding: 0.25rem; border-radius: 3px;">pip install yfinance pandas numpy</code>
+                            </div>
+                        </div>
+                    `;
+                    return;
+                }
+
+                // Convert symbol names for display
+                const symbolMap = {
+                    'EURUSD=X': 'EUR/USD',
+                    'GBPUSD=X': 'GBP/USD', 
+                    'USDJPY=X': 'USD/JPY',
+                    'USDCHF=X': 'USD/CHF',
+                    'AUDUSD=X': 'AUD/USD',
+                    'USDCAD=X': 'USD/CAD',
+                    'NZDUSD=X': 'NZD/USD',
+                    'GC=F': 'Gold',
+                    'SI=F': 'Silver',
+                    'CL=F': 'Crude Oil',
+                    '^GSPC': 'S&P 500',
+                    '^IXIC': 'NASDAQ',
+                    '^DJI': 'Dow Jones',
+                    '^FTSE': 'FTSE 100',
+                    '^GDAXI': 'DAX',
+                    '^FCHI': 'CAC 40',
+                    'BTC-USD': 'Bitcoin',
+                    'ETH-USD': 'Ethereum'
+                };
+
+                const marketItems = Object.entries(data.data).map(([symbol, marketData]) => {
+                    const displayName = symbolMap[symbol] || symbol;
+                    const changeClass = marketData.change >= 0 ? 'positive' : 'negative';
+                    const changeSign = marketData.change >= 0 ? '+' : '';
+                    
+                    let technicalHtml = '';
+                    if (marketData.technical) {
+                        const tech = marketData.technical;
+                        let rsiClass = '';
+                        if (tech.rsi > 70) rsiClass = 'overbought';
+                        else if (tech.rsi < 30) rsiClass = 'oversold';
+                        
+                        technicalHtml = `
+                            <div class="market-technical">
+                                <span class="tech-indicator ${rsiClass}">RSI: ${tech.rsi}</span>
+                                <span class="tech-indicator">Vol: ${tech.volatility}%</span>
+                            </div>
+                        `;
+                    }
+                    
+                    return `
+                        <div class="market-item">
+                            <div class="market-symbol">${displayName}</div>
+                            <div class="market-price">
+                                <span class="market-value">${marketData.price}</span>
+                                <span class="market-change ${changeClass}">
+                                    ${changeSign}${marketData.change} (${changeSign}${marketData.change_percent}%)
+                                </span>
+                            </div>
+                            ${technicalHtml}
+                        </div>
+                    `;
+                }).join('');
+
+                container.innerHTML = marketItems + `
+                    <div class="market-update-status">
+                        Updated: ${new Date(data.timestamp).toLocaleTimeString()} • ${data.symbols_count} symbols
+                    </div>
+                `;
+            }
+
+            renderMarketDataError() {
+                const container = document.getElementById('marketDataPanel');
+                container.innerHTML = `
+                    <div style="text-align: center; color: #ef4444; padding: 1rem;">
+                        <div>⚠️ Market data unavailable</div>
+                        <div style="font-size: 0.8rem; margin-top: 0.5rem;">Check connection</div>
+                    </div>
+                `;
+            }
+
+            renderInsights() {
+                console.log('🎨 Starting renderInsights...');
+                const container = document.getElementById('insightsContainer');
+                console.log('📦 Container found:', container ? 'Yes' : 'No');
+                console.log('📝 Raw insights array:', this.insights);
+                console.log('📊 Raw insights count:', this.insights.length);
+                
+                const filteredInsights = this.filterInsights();
+                console.log('🔍 Filtered insights count:', filteredInsights.length);
+                console.log('🔍 Current filter:', this.currentFilter);
+                
+                if (filteredInsights.length === 0) {
+                    console.log('⚠️ No insights to display - showing empty state');
+                    container.innerHTML = `
+                        <div class="empty-state">
+                            <div class="empty-state-icon">📈</div>
+                            <h3>No insights found</h3>
+                            <p>No insights match the current filter criteria</p>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                console.log('✅ Rendering', filteredInsights.length, 'insights');
+                container.innerHTML = filteredInsights.map(insight => this.createInsightCard(insight)).join('');
+                console.log('🎯 Render complete');
+            }
+
+            filterInsights() {
+                let filtered = [...this.insights];
+                
+                switch (this.currentFilter) {
+                    case 'signal':
+                        filtered = filtered.filter(i => i.insight_type === 'signal');
+                        break;
+                    case 'warning':
+                        filtered = filtered.filter(i => i.insight_type === 'warning');
+                        break;
+                    case 'opportunity':
+                        filtered = filtered.filter(i => i.insight_type === 'opportunity');
+                        break;
+                    case 'trend':
+                        filtered = filtered.filter(i => i.insight_type === 'trend');
+                        break;
+                    case 'high':
+                        filtered = filtered.filter(i => i.priority === 'high' || i.priority === 'critical');
+                        break;
+                }
+                
+                return filtered.sort((a, b) => {
+                    // Sort by priority, then by timestamp
+                    const priorityOrder = { 'critical': 4, 'high': 3, 'medium': 2, 'low': 1 };
+                    const aPriority = priorityOrder[a.priority] || 0;
+                    const bPriority = priorityOrder[b.priority] || 0;
+                    
+                    if (aPriority !== bPriority) {
+                        return bPriority - aPriority;
+                    }
+                    
+                    return new Date(b.timestamp) - new Date(a.timestamp);
+                });
+            }
+
+            createInsightCard(insight) {
+                const timeAgo = this.getTimeAgo(insight.timestamp);
+                const confidence = Math.round((insight.confidence || 0) * 100);
+                
+                // ROBUST FIELD ACCESS with safe defaults
+                const title = insight.title || 'Market Analysis';
+                const message = insight.description || insight.message || 'No description available';
+                const symbol = insight.symbol || 'UNKNOWN';
+                const priority = insight.priority || 'medium';
+                const riskLevel = insight.risk_level || 'medium';
+                const suggestedAction = insight.suggested_action || '';
+                
+                // SAFE PRICE HANDLING
+                let priceDisplay = 'N/A';
+                if (insight.price_at_insight !== undefined && insight.price_at_insight !== null) {
+                    priceDisplay = `$${parseFloat(insight.price_at_insight).toFixed(4)}`;
+                } else if (insight.market_data && insight.market_data.price !== undefined) {
+                    priceDisplay = `$${parseFloat(insight.market_data.price).toFixed(4)}`;
+                } else {
+                    priceDisplay = 'Price N/A';
+                }
+                
+                return `
+                    <div class="insight-card ${priority}-priority" data-insight-id="${insight.id}">
+                        <div class="insight-header">
+                            <div class="insight-title">${title}</div>
+                            <div class="insight-badges">
+                                <span class="badge symbol">${symbol}</span>
+                                <span class="badge confidence">${confidence}%</span>
+                            </div>
+                        </div>
+                        <div class="insight-message">${message}</div>
+                        ${suggestedAction ? `
+                            <div class="insight-action">
+                                <strong>💡 Suggested Action:</strong> ${suggestedAction}
+                            </div>
+                        ` : ''}
+                        <div class="insight-meta">
+                            <div class="insight-time">
+                                <span>🕒 ${timeAgo}</span>
+                                <span>💰 ${priceDisplay}</span>
+                            </div>
+                            <span class="risk-indicator risk-${riskLevel}">
+                                ${riskLevel.toUpperCase()} RISK
+                            </span>
+                        </div>
+                    </div>
+                `;
+            }
+
+            updateStats(stats) {
+                document.getElementById('totalInsights').textContent = this.insights.length;
+                document.getElementById('highPriorityCount').textContent = 
+                    this.insights.filter(i => i.priority === 'high' || i.priority === 'critical').length;
+                document.getElementById('activeSymbols').textContent = 
+                    new Set(this.insights.map(i => i.symbol)).size;
+                
+                // Update sidebar stats with honest descriptions
+                document.getElementById('todayInsights').textContent = stats.todayInsights || 0;
+                document.getElementById('todayInsightsDetails').textContent = 
+                    `${stats.displayableInsights || 0} can display`;
+                
+                document.getElementById('avgConfidence').textContent = 
+                    stats.avgConfidence ? `${Math.round(stats.avgConfidence * 100)}%` : '0%';
+                document.getElementById('avgConfidenceDetails').textContent = 
+                    `${stats.realAnalysisInsights || 0} technical insights`;
+                
+                document.getElementById('successRate').textContent = 
+                    stats.successRate ? `${Math.round(stats.successRate * 100)}%` : '0%';
+                document.getElementById('successRateDetails').textContent = 
+                    stats.successRateDescription || 'No trading data';
+                
+                document.getElementById('activeAlerts').textContent = stats.activeAlerts || 0;
+                document.getElementById('activeAlertsDetails').textContent = 
+                    `Out of ${stats.totalInsights || 0} total`;
+                
+                // Update symbol summary
+                this.updateSymbolSummary();
+            }
+
+            updateSymbolSummary() {
+                const symbolCounts = {};
+                this.insights.forEach(insight => {
+                    if (!symbolCounts[insight.symbol]) {
+                        symbolCounts[insight.symbol] = 0;
+                    }
+                    symbolCounts[insight.symbol]++;
+                });
+                
+                const summaryHtml = Object.entries(symbolCounts)
+                    .sort(([,a], [,b]) => b - a)
+                    .slice(0, 10)
+                    .map(([symbol, count]) => `
+                        <div class="symbol-item">
+                            <span class="symbol-name">${symbol}</span>
+                            <span class="symbol-alerts">${count}</span>
+                        </div>
+                    `).join('');
+                
+                document.getElementById('symbolSummary').innerHTML = summaryHtml || 
+                    '<div style="text-align: center; color: #94a3b8; padding: 1rem;">No data available</div>';
+            }
+
+            showRefreshIndicator() {
+                document.getElementById('refreshSpinner').style.display = 'block';
+            }
+
+            hideRefreshIndicator() {
+                document.getElementById('refreshSpinner').style.display = 'none';
+            }
+
+            updateLastRefreshTime() {
+                const now = new Date();
+                const timeString = now.toLocaleTimeString();
+                document.getElementById('lastUpdate').textContent = `Updated ${timeString}`;
+            }
+
+            startAutoRefresh() {
+                setInterval(() => {
+                    this.loadInsights();
+                }, this.refreshInterval);
+            }
+
+            getTimeAgo(timestamp) {
+                const now = new Date();
+                const time = new Date(timestamp);
+                const diff = now - time;
+                
+                const minutes = Math.floor(diff / (1000 * 60));
+                const hours = Math.floor(diff / (1000 * 60 * 60));
+                const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+                
+                if (days > 0) return `${days}d ago`;
+                if (hours > 0) return `${hours}h ago`;
+                if (minutes > 0) return `${minutes}m ago`;
+                return 'Just now';
+            }
+        }
+
+        // Initialize the intelligence board when page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            new MarketIntelligenceBoard();
+            initializeSidebarToggle();
+        });
+
+        // Sidebar Toggle Functionality
+        function initializeSidebarToggle() {
+            const sidebar = document.getElementById('sidebar');
+            const mainContent = document.querySelector('.main-content');
+            const toggleBtn = document.getElementById('sidebarToggle');
+
+            // Toggle sidebar on button click
+            toggleBtn.addEventListener('click', () => {
+                sidebar.classList.toggle('collapsed');
+                mainContent.classList.toggle('sidebar-collapsed');
+                toggleBtn.classList.toggle('collapsed');
+                
+                // Update button icon  
+                toggleBtn.textContent = sidebar.classList.contains('collapsed') ? '☰' : '✕';
+            });
+
+            // Auto-hide sidebar on mobile
+            function handleResize() {
+                if (window.innerWidth <= 768) {
+                    sidebar.classList.remove('collapsed');
+                    sidebar.classList.toggle('mobile-open', false);
+                    mainContent.classList.remove('sidebar-collapsed');
+                    toggleBtn.style.display = 'block';
+                } else {
+                    sidebar.classList.remove('mobile-open');
+                    sidebar.classList.remove('collapsed'); // Ensure sidebar is visible on desktop
+                    mainContent.classList.remove('sidebar-collapsed');
+                    toggleBtn.style.display = 'block';
+                }
+            }
+
+            // Mobile sidebar toggle
+            if (window.innerWidth <= 768) {
+                toggleBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    sidebar.classList.toggle('mobile-open');
+                });
+
+                // Close sidebar when clicking outside on mobile
+                document.addEventListener('click', (e) => {
+                    if (window.innerWidth <= 768 && 
+                        !sidebar.contains(e.target) && 
+                        !toggleBtn.contains(e.target)) {
+                        sidebar.classList.remove('mobile-open');
+                    }
+                });
+            }
+
+            window.addEventListener('resize', handleResize);
+            handleResize(); // Initial check
+        }
+    </script>
+</body>
+</html> 

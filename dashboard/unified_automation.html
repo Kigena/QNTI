@@ -1,0 +1,870 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QNTI - Unified Automation Dashboard</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.2/socket.io.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            color: #e2e8f0;
+            min-height: 100vh;
+            display: flex;
+        }
+
+        /* Sidebar Navigation */
+        .sidebar {
+            width: 280px;
+            background: rgba(15, 23, 42, 0.95);
+            backdrop-filter: blur(10px);
+            border-right: 1px solid #334155;
+            height: 100vh;
+            position: fixed;
+            left: 0;
+            top: 0;
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+        }
+
+        .sidebar-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid #334155;
+        }
+
+        .logo {
+            font-size: 1.3rem;
+            font-weight: bold;
+            background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-align: center;
+        }
+
+        .sidebar-content {
+            flex: 1;
+            padding: 1rem 0;
+        }
+
+        .nav-section {
+            margin-bottom: 2rem;
+        }
+
+        .nav-section-title {
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            padding: 0 1.5rem 0.5rem 1.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .nav-link {
+            color: #94a3b8;
+            text-decoration: none;
+            padding: 0.75rem 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            transition: all 0.2s;
+            border-left: 3px solid transparent;
+        }
+
+        .nav-link:hover {
+            background: rgba(100, 116, 139, 0.1);
+            color: #f1f5f9;
+            border-left-color: #3b82f6;
+        }
+
+        .nav-link.active {
+            background: rgba(59, 130, 246, 0.1);
+            color: #3b82f6;
+            border-left-color: #3b82f6;
+        }
+
+        .nav-icon {
+            font-size: 1.2rem;
+            width: 20px;
+            text-align: center;
+        }
+
+        /* Main Content */
+        .main-content {
+            margin-left: 280px;
+            flex: 1;
+            padding: 2rem;
+            overflow-y: auto;
+            height: 100vh;
+        }
+
+        .page-header {
+            margin-bottom: 2rem;
+        }
+
+        .page-title {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #f1f5f9;
+            margin-bottom: 0.5rem;
+        }
+
+        .page-subtitle {
+            color: #94a3b8;
+            font-size: 1rem;
+        }
+
+        /* Cards */
+        .card {
+            background: rgba(30, 41, 59, 0.6);
+            backdrop-filter: blur(10px);
+            border: 1px solid #334155;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .card-header {
+            margin-bottom: 1rem;
+        }
+
+        .card-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #f1f5f9;
+            margin-bottom: 0.5rem;
+        }
+
+        .card-subtitle {
+            color: #94a3b8;
+            font-size: 0.9rem;
+        }
+
+        /* Indicator Selection Panel */
+        .indicator-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .indicator-card {
+            background: rgba(51, 65, 85, 0.5);
+            border: 2px solid transparent;
+            border-radius: 8px;
+            padding: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .indicator-card:hover {
+            border-color: #3b82f6;
+            background: rgba(59, 130, 246, 0.1);
+        }
+
+        .indicator-card.selected {
+            border-color: #10b981;
+            background: rgba(16, 185, 129, 0.1);
+        }
+
+        .indicator-name {
+            font-weight: 600;
+            color: #f1f5f9;
+            margin-bottom: 0.5rem;
+        }
+
+        .indicator-description {
+            color: #94a3b8;
+            font-size: 0.85rem;
+        }
+
+        /* Parameter Configuration Panel */
+        .parameters-panel {
+            display: none;
+        }
+
+        .parameters-panel.active {
+            display: block;
+        }
+
+        .parameter-group {
+            margin-bottom: 1rem;
+        }
+
+        .parameter-label {
+            display: block;
+            color: #e2e8f0;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+        }
+
+        .parameter-input {
+            width: 100%;
+            padding: 0.75rem;
+            background: rgba(30, 41, 59, 0.8);
+            border: 1px solid #475569;
+            border-radius: 6px;
+            color: #e2e8f0;
+            font-size: 0.9rem;
+        }
+
+        .parameter-input:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        /* Buttons */
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 6px;
+            font-weight: 500;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #2563eb, #1e40af);
+            transform: translateY(-1px);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: linear-gradient(135deg, #059669, #047857);
+            transform: translateY(-1px);
+        }
+
+        .btn-secondary {
+            background: rgba(71, 85, 105, 0.8);
+            color: #e2e8f0;
+            border: 1px solid #475569;
+        }
+
+        .btn-secondary:hover {
+            background: rgba(100, 116, 139, 0.8);
+        }
+
+        /* Status Panel */
+        .status-panel {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .status-card {
+            flex: 1;
+            background: rgba(30, 41, 59, 0.6);
+            border: 1px solid #334155;
+            border-radius: 8px;
+            padding: 1rem;
+            text-align: center;
+        }
+
+        .status-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #f1f5f9;
+        }
+
+        .status-label {
+            color: #94a3b8;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        /* Results Panel */
+        .results-panel {
+            background: rgba(30, 41, 59, 0.6);
+            border: 1px solid #334155;
+            border-radius: 12px;
+            padding: 1.5rem;
+            min-height: 300px;
+        }
+
+        .results-content {
+            color: #94a3b8;
+            font-style: italic;
+            text-align: center;
+            padding: 2rem;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 100%;
+                height: auto;
+                position: relative;
+                display: none;
+            }
+
+            .main-content {
+                margin-left: 0;
+                padding: 1rem;
+            }
+
+            .indicator-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .status-panel {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Sidebar Navigation -->
+    <div class="sidebar">
+        <div class="sidebar-header">
+            <div class="logo">QNTI</div>
+        </div>
+        
+        <div class="sidebar-content">
+            <div class="nav-section">
+                <div class="nav-section-title">Main</div>
+                <a href="../qnti_dashboard.html" class="nav-link">
+                    <span class="nav-icon">🏠</span>
+                    <span>Dashboard</span>
+                </a>
+                <a href="main_dashboard.html" class="nav-link">
+                    <span class="nav-icon">📊</span>
+                    <span>Overview</span>
+                </a>
+            </div>
+
+            <div class="nav-section">
+                <div class="nav-section-title">Trading</div>
+                <a href="trading_center.html" class="nav-link">
+                    <span class="nav-icon">📈</span>
+                    <span>Trading Center</span>
+                </a>
+                <a href="vision_trading_charts.html" class="nav-link">
+                    <span class="nav-icon">👁️</span>
+                    <span>Vision Trading</span>
+                </a>
+            </div>
+
+            <div class="nav-section">
+                <div class="nav-section-title">AI & Intelligence</div>
+                <a href="market_intelligence_board.html" class="nav-link">
+                    <span class="nav-icon">🧠</span>
+                    <span>Market Intelligence</span>
+                </a>
+                <a href="forex_advisor_chat.html" class="nav-link">
+                    <span class="nav-icon">💬</span>
+                    <span>Advisor Chat</span>
+                </a>
+                <a href="ea_management.html" class="nav-link">
+                    <span class="nav-icon">🤖</span>
+                    <span>EA Manager</span>
+                </a>
+                <a href="#" class="nav-link active">
+                    <span class="nav-icon">🎯</span>
+                    <span>Unified Automation</span>
+                </a>
+            </div>
+
+            <div class="nav-section">
+                <div class="nav-section-title">Analysis</div>
+                <a href="strategy_tester.html" class="nav-link">
+                    <span class="nav-icon">🧪</span>
+                    <span>Strategy Tester</span>
+                </a>
+                <a href="analytics_reports.html" class="nav-link">
+                    <span class="nav-icon">📊</span>
+                    <span>Analytics</span>
+                </a>
+                <a href="smc_analysis.html" class="nav-link">
+                    <span class="nav-icon">🎯</span>
+                    <span>Smart Money Concepts</span>
+                </a>
+                <a href="smc_automation.html" class="nav-link">
+                    <span class="nav-icon">🚀</span>
+                    <span>SMC Automation</span>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <div class="page-header">
+            <h1 class="page-title">🎯 Unified Automation Dashboard</h1>
+            <p class="page-subtitle">Manage all Pine Script indicators and automation strategies from one central location</p>
+        </div>
+
+        <!-- Status Panel -->
+        <div class="status-panel">
+            <div class="status-card">
+                <div class="status-value" id="activeIndicators">0</div>
+                <div class="status-label">Active Indicators</div>
+            </div>
+            <div class="status-card">
+                <div class="status-value" id="runningStrategies">0</div>
+                <div class="status-label">Running Strategies</div>
+            </div>
+            <div class="status-card">
+                <div class="status-value" id="totalSignals">0</div>
+                <div class="status-label">Total Signals</div>
+            </div>
+        </div>
+
+        <!-- Indicator Selection -->
+        <div class="card">
+            <div class="card-header">
+                <h2 class="card-title">📊 Select Indicator</h2>
+                <p class="card-subtitle">Choose an indicator to configure and run automation</p>
+            </div>
+            
+            <div class="indicator-grid" id="indicatorGrid">
+                <!-- Indicators will be populated by JavaScript -->
+            </div>
+        </div>
+
+        <!-- Parameter Configuration -->
+        <div class="card">
+            <div class="card-header">
+                <h2 class="card-title">⚙️ Configuration</h2>
+                <p class="card-subtitle">Configure parameters for the selected indicator</p>
+            </div>
+            
+            <div id="parametersContainer">
+                <div class="results-content">
+                    <i class="fas fa-arrow-up"></i>
+                    <p>Select an indicator above to configure its parameters</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Control Buttons -->
+        <div class="card">
+            <div class="card-header">
+                <h2 class="card-title">🎛️ Controls</h2>
+                <p class="card-subtitle">Start, stop, and manage automation</p>
+            </div>
+            
+            <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+                <button class="btn btn-primary" id="startBtn" onclick="startAutomation()">
+                    <i class="fas fa-play"></i>
+                    Start Automation
+                </button>
+                <button class="btn btn-secondary" id="stopBtn" onclick="stopAutomation()" disabled>
+                    <i class="fas fa-stop"></i>
+                    Stop Automation
+                </button>
+                <button class="btn btn-secondary" onclick="getStatus()">
+                    <i class="fas fa-refresh"></i>
+                    Refresh Status
+                </button>
+            </div>
+        </div>
+
+        <!-- Results Panel -->
+        <div class="card">
+            <div class="card-header">
+                <h2 class="card-title">📈 Results & Signals</h2>
+                <p class="card-subtitle">Real-time indicator signals and automation results</p>
+            </div>
+            
+            <div class="results-panel">
+                <div class="results-content" id="resultsContent">
+                    <i class="fas fa-chart-line" style="font-size: 2rem; margin-bottom: 1rem; opacity: 0.5;"></i>
+                    <p>Automation results and signals will appear here once you start an indicator</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Strategy definitions (UPDATED - ALL CONNECTED TO MT5 LIVE TRADING)
+        const indicators = {
+            rsi_divergence: {
+                name: "RSI with Divergence Detection ⚡ LIVE",
+                description: "RSI oscillator with bullish/bearish divergence detection - FULLY INTEGRATED WITH MT5",
+                parameters: {
+                    rsi_period: { type: "number", label: "RSI Period", default: 14, min: 2, max: 50 },
+                    rsi_overbought: { type: "number", label: "Overbought Level", default: 70, min: 50, max: 90 },
+                    rsi_oversold: { type: "number", label: "Oversold Level", default: 30, min: 10, max: 50 },
+                    divergence_lookback: { type: "number", label: "Divergence Lookback", default: 20, min: 10, max: 50 },
+                    min_divergence_strength: { type: "number", label: "Min Divergence Strength", default: 0.6, min: 0.1, max: 1.0, step: 0.1 }
+                }
+            },
+            macd_advanced: {
+                name: "MACD Advanced ⚡ LIVE",
+                description: "MACD with histogram analysis and zero line crossovers - FULLY INTEGRATED WITH MT5",
+                parameters: {
+                    fast_period: { type: "number", label: "Fast EMA Period", default: 12, min: 5, max: 50 },
+                    slow_period: { type: "number", label: "Slow EMA Period", default: 26, min: 10, max: 100 },
+                    signal_period: { type: "number", label: "Signal Period", default: 9, min: 3, max: 30 },
+                    zero_cross_enabled: { type: "checkbox", label: "Zero Line Cross Filter", default: true },
+                    histogram_threshold: { type: "number", label: "Histogram Threshold", default: 0.0001, min: 0.00001, max: 0.001, step: 0.00001 }
+                }
+            },
+            bollinger_bands: {
+                name: "Bollinger Bands ⚡ LIVE",
+                description: "Mean reversion and breakout trading with squeeze detection - FULLY INTEGRATED WITH MT5",
+                parameters: {
+                    period: { type: "number", label: "Period", default: 20, min: 10, max: 50 },
+                    std_dev: { type: "number", label: "Standard Deviation", default: 2.0, min: 1.0, max: 3.0, step: 0.1 },
+                    squeeze_threshold: { type: "number", label: "Squeeze Threshold", default: 0.1, min: 0.05, max: 0.3, step: 0.01 },
+                    breakout_confirmation: { type: "checkbox", label: "Breakout Confirmation", default: true },
+                    mean_reversion_mode: { type: "checkbox", label: "Mean Reversion Mode", default: true }
+                }
+            },
+            ichimoku_cloud: {
+                name: "Ichimoku Cloud ⚡ LIVE",
+                description: "Complete Ichimoku system with cloud analysis and TK crossovers - FULLY INTEGRATED WITH MT5",
+                parameters: {
+                    tenkan_period: { type: "number", label: "Tenkan-Sen Period", default: 9, min: 5, max: 20 },
+                    kijun_period: { type: "number", label: "Kijun-Sen Period", default: 26, min: 15, max: 50 },
+                    senkou_span_b_period: { type: "number", label: "Senkou Span B Period", default: 52, min: 30, max: 100 },
+                    chikou_confirmation: { type: "checkbox", label: "Chikou Span Confirmation", default: true },
+                    cloud_filter: { type: "checkbox", label: "Cloud Color Filter", default: true }
+                }
+            },
+            nr4_nr7_breakout: {
+                name: "NR4/NR7 Breakout ⚡ LIVE",
+                description: "Narrow Range patterns with volume-confirmed breakouts - FULLY INTEGRATED WITH MT5",
+                parameters: {
+                    enable_nr4: { type: "checkbox", label: "Enable NR4", default: true },
+                    enable_nr7: { type: "checkbox", label: "Enable NR7", default: true },
+                    enable_nr14: { type: "checkbox", label: "Enable NR14", default: false },
+                    volume_confirmation: { type: "checkbox", label: "Volume Confirmation", default: true },
+                    breakout_buffer: { type: "number", label: "Breakout Buffer", default: 0.0001, min: 0.00001, max: 0.001, step: 0.00001 },
+                    max_wait_hours: { type: "number", label: "Max Wait Hours", default: 24, min: 1, max: 72 }
+                }
+            },
+            supertrend_dual: {
+                name: "SuperTrend Dual ⚡ LIVE",
+                description: "Dual SuperTrend system with standard and centerline indicators - FULLY INTEGRATED WITH MT5",
+                parameters: {
+                    st_period: { type: "number", label: "Standard SuperTrend Period", default: 7, min: 3, max: 20 },
+                    st_multiplier: { type: "number", label: "Standard SuperTrend Multiplier", default: 7.0, min: 1.0, max: 15.0, step: 0.1 },
+                    cl_period: { type: "number", label: "Centerline SuperTrend Period", default: 22, min: 10, max: 50 },
+                    cl_multiplier: { type: "number", label: "Centerline SuperTrend Multiplier", default: 3.0, min: 1.0, max: 10.0, step: 0.1 },
+                    cl_use_wicks: { type: "checkbox", label: "Use Wicks for Centerline Calculation", default: false }
+                }
+            },
+            smc_automation: {
+                name: "SMC Automation ⚡ LIVE",
+                description: "Smart Money Concepts automation with order blocks, FVGs, and structure analysis - FULLY INTEGRATED WITH MT5",
+                parameters: {
+                    auto_trading_enabled: { type: "checkbox", label: "Auto Trading Enabled", default: false },
+                    max_risk_per_trade: { type: "number", label: "Max Risk Per Trade (%)", default: 2.0, min: 0.5, max: 5.0, step: 0.1 },
+                    min_confidence: { type: "number", label: "Min Signal Confidence", default: 0.7, min: 0.1, max: 1.0, step: 0.1 },
+                    premium_threshold: { type: "number", label: "Premium Zone Threshold", default: 0.7, min: 0.5, max: 0.9, step: 0.05 },
+                    discount_threshold: { type: "number", label: "Discount Zone Threshold", default: 0.3, min: 0.1, max: 0.5, step: 0.05 },
+                    alert_notifications: { type: "checkbox", label: "Alert Notifications", default: true }
+                }
+            }
+        };
+
+        let selectedIndicator = null;
+        let automationStatus = {
+            isRunning: false,
+            activeIndicators: 0,
+            runningStrategies: 0,
+            totalSignals: 0
+        };
+
+        // Initialize the page
+        document.addEventListener('DOMContentLoaded', function() {
+            renderIndicators();
+            updateStatusDisplay();
+            getStatus(); // Load initial status
+        });
+
+        function renderIndicators() {
+            const grid = document.getElementById('indicatorGrid');
+            grid.innerHTML = '';
+            
+            Object.keys(indicators).forEach(key => {
+                const indicator = indicators[key];
+                const card = document.createElement('div');
+                card.className = 'indicator-card';
+                card.onclick = () => selectIndicator(key);
+                
+                card.innerHTML = `
+                    <div class="indicator-name">${indicator.name}</div>
+                    <div class="indicator-description">${indicator.description}</div>
+                `;
+                
+                grid.appendChild(card);
+            });
+        }
+
+        function selectIndicator(indicatorKey) {
+            // Remove previous selection
+            document.querySelectorAll('.indicator-card').forEach(card => {
+                card.classList.remove('selected');
+            });
+            
+            // Select new indicator
+            event.target.closest('.indicator-card').classList.add('selected');
+            selectedIndicator = indicatorKey;
+            
+            // Render parameters
+            renderParameters(indicatorKey);
+        }
+
+        function renderParameters(indicatorKey) {
+            const indicator = indicators[indicatorKey];
+            const container = document.getElementById('parametersContainer');
+            
+            let html = `<div class="parameters-panel active">`;
+            
+            Object.keys(indicator.parameters).forEach(paramKey => {
+                const param = indicator.parameters[paramKey];
+                html += `<div class="parameter-group">`;
+                html += `<label class="parameter-label">${param.label}</label>`;
+                
+                if (param.type === 'number') {
+                    html += `<input type="number" class="parameter-input" id="${paramKey}" 
+                            value="${param.default}" min="${param.min || ''}" max="${param.max || ''}" 
+                            step="${param.step || 1}">`;
+                } else if (param.type === 'select') {
+                    html += `<select class="parameter-input" id="${paramKey}">`;
+                    param.options.forEach(option => {
+                        const selected = option === param.default ? 'selected' : '';
+                        html += `<option value="${option}" ${selected}>${option}</option>`;
+                    });
+                    html += `</select>`;
+                } else if (param.type === 'checkbox') {
+                    const checked = param.default ? 'checked' : '';
+                    html += `<div><input type="checkbox" id="${paramKey}" ${checked}> 
+                            <label for="${paramKey}">${param.label}</label></div>`;
+                }
+                
+                html += `</div>`;
+            });
+            
+            html += `</div>`;
+            container.innerHTML = html;
+        }
+
+        async function startAutomation() {
+            if (!selectedIndicator) {
+                alert('Please select a strategy first');
+                return;
+            }
+            
+            // Collect parameters
+            const parameters = {};
+            const indicator = indicators[selectedIndicator];
+            
+            Object.keys(indicator.parameters).forEach(paramKey => {
+                const element = document.getElementById(paramKey);
+                if (element.type === 'checkbox') {
+                    parameters[paramKey] = element.checked;
+                } else {
+                    parameters[paramKey] = parseFloat(element.value) || element.value;
+                }
+            });
+            
+            try {
+                const response = await fetch('/api/unified-automation/start', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        strategy: selectedIndicator,
+                        config: {
+                            parameters: parameters,
+                            symbols: ['EURUSD', 'GBPUSD', 'USDJPY', 'XAUUSD']
+                        }
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    automationStatus.isRunning = true;
+                    updateButtonStates();
+                    updateStatusDisplay();
+                    displayResult(`✅ ${result.strategy} started successfully on ${result.symbols.join(', ')}!`, 'success');
+                    
+                    // Start polling for updates
+                    startStatusPolling();
+                } else {
+                    displayResult(`❌ Error: ${result.error}`, 'error');
+                }
+            } catch (error) {
+                console.error('Error starting automation:', error);
+                displayResult(`❌ Connection error: ${error.message}`, 'error');
+            }
+        }
+
+        async function stopAutomation() {
+            if (!selectedIndicator) {
+                alert('Please select a strategy first');
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/unified-automation/stop', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        strategy: selectedIndicator
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    automationStatus.isRunning = false;
+                    updateButtonStates();
+                    displayResult(`⏹️ ${result.strategy} stopped successfully`, 'info');
+                    stopStatusPolling();
+                } else {
+                    displayResult(`❌ Error stopping automation: ${result.error}`, 'error');
+                }
+            } catch (error) {
+                console.error('Error stopping automation:', error);
+                displayResult(`❌ Connection error: ${error.message}`, 'error');
+            }
+        }
+
+        async function getStatus() {
+            try {
+                const response = await fetch('/api/unified-automation/status');
+                const status = await response.json();
+                
+                if (status.success && status.strategies) {
+                    // Count running strategies
+                    let runningCount = 0;
+                    let totalSignals = 0;
+                    
+                    Object.values(status.strategies).forEach(strategy => {
+                        if (strategy.status === 'running') {
+                            runningCount++;
+                        }
+                        totalSignals += strategy.details.signals_count || 0;
+                    });
+                    
+                    automationStatus = {
+                        isRunning: runningCount > 0,
+                        activeIndicators: runningCount,
+                        runningStrategies: runningCount,
+                        totalSignals: totalSignals
+                    };
+                    
+                    updateStatusDisplay();
+                    updateButtonStates();
+                    
+                    // Display latest signals from running strategies
+                    displayLatestSignals(status.strategies);
+                }
+            } catch (error) {
+                console.error('Error getting status:', error);
+            }
+        }
+
+        function updateStatusDisplay() {
+            document.getElementById('activeIndicators').textContent = automationStatus.activeIndicators;
+            document.getElementById('runningStrategies').textContent = automationStatus.runningStrategies;
+            document.getElementById('totalSignals').textContent = automationStatus.totalSignals;
+        }
+
+        function updateButtonStates() {
+            const startBtn = document.getElementById('startBtn');
+            const stopBtn = document.getElementById('stopBtn');
+            
+            if (automationStatus.isRunning) {
+                startBtn.disabled = true;
+                stopBtn.disabled = false;
+                startBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Running...';
+            } else {
+                startBtn.disabled = false;
+                stopBtn.disabled = true;
+                startBtn.innerHTML = '<i class="fas fa-play"></i> Start Automation';
+            }
+        }
+
+        function displayResult(message, type) {
+            const content = document.getElementById('resultsContent');
+            const now = new Date().toLocaleTimeString();
+            
+            const typeIcons = {
+                success: '✅',
+                error: '❌',
+                info: 'ℹ️',
+                signal: '📊'
+            };
+            
+            const icon = typeIcons[type] || '📊';
+            
+            content.innerHTML = `
+                <div style="text-align: left; padding: 1rem; background: rgba(51, 65, 85, 0.3); border-radius: 8px; margin-bottom: 1rem;">
+                    <div style="color: #f1f5f9; font-weight: 500;">${icon} ${message}</div>
+                    <div style="color: #64748b; font-size: 0.8rem; margin-top: 0.5rem;">${now}</div>
+                </div>
+                ${content.innerHTML}
+            `;
+        }
+
+        function displaySignals(signals) {
+            signals.forEach(signal => {
+                const message = `${signal.indicator.toUpperCase()}: ${signal.signal} at ${signal.price} (${signal.symbol})`;
+                displayResult(message, 'signal');
+            });
+        }
+
+        function displayLatestSignals(strategies) {
+            Object.entries(strategies).forEach(([strategyName, strategy]) => {
+                if (strategy.status === 'running' && strategy.details.last_signal) {
+                    const signal = strategy.details.last_signal;
+                    const message = `${strategyName.toUpperCase()}: ${signal.signal_type} - Confidence: ${(signal.confidence * 100).toFixed(1)}%`;
+                    displayResult(message, 'signal');
+                }
+            });
+        }
+
+        let statusPollingInterval;
+
+        function startStatusPolling() {
+            statusPollingInterval = setInterval(getStatus, 5000); // Poll every 5 seconds
+        }
+
+        function stopStatusPolling() {
+            if (statusPollingInterval) {
+                clearInterval(statusPollingInterval);
+                statusPollingInterval = null;
+            }
+        }
+
+        // Auto-refresh status every 30 seconds
+        setInterval(getStatus, 30000);
+    </script>
+</body>
+</html> 

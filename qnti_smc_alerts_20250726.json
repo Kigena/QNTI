@@ -1,0 +1,40 @@
+[
+  {
+    "signal": {
+      "signal_id": "EURUSD_structure_break_buy_1753563523",
+      "symbol": "EURUSD",
+      "signal_type": "structure_break_buy",
+      "alert_level": "high",
+      "entry_price": 1.17389,
+      "stop_loss": 1.16589,
+      "take_profit": 1.1898900000000001,
+      "risk_reward_ratio": 2.0,
+      "confidence": 0.8799999999999999,
+      "timeframe": "H1",
+      "timestamp": "2025-07-26T23:58:43.646802",
+      "zone_info": {
+        "zone_type": "structure_continuation",
+        "zone_range": [
+          1.17389,
+          1.17389
+        ],
+        "pattern_data": {
+          "type": "structure_continuation",
+          "structure": "bullish",
+          "confidence": 0.8799999999999999
+        },
+        "market_state": {
+          "state": "unknown",
+          "confidence": 0.5
+        },
+        "validation": {
+          "valid": true,
+          "reason": "Entry validated - unknown market with 0.50 confidence",
+          "suggested_action": "enter",
+          "confidence_adjustment": 0.0
+        }
+      },
+      "additional_data": {
+        "symbol": "EURUSD",
+        "current_price": 1.17389,
+        "timestamp": 

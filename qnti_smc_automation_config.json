@@ -1,0 +1,23 @@
+{
+  "auto_trading_enabled": true,
+  "alert_notifications": true,
+  "risk_management": {
+    "max_risk_per_trade": 0.5,
+    "max_daily_drawdown": 5,
+    "default_risk_reward": 1.5
+  },
+  "signal_filters": {
+    "min_confidence": 0.55
+  },
+  "zone_settings": {
+    "premium_threshold": 0.7,
+    "discount_threshold": 0.3,
+    "alert_distance_pips": 20
+  },
+  "order_block_settings": {
+    "min_strength": 0.6,
+    "max_age_hours": 24,
+    "confirmation_required": true
+  },
+  "max_risk_per_trade": 2.5
+}

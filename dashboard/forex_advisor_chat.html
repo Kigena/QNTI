@@ -1,0 +1,1117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QNTI Forex Financial Advisor</title>
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/4.3.0/marked.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            color: #e2e8f0;
+            min-height: 100vh;
+            display: flex;
+        }
+
+        /* Sidebar Navigation */
+        .sidebar {
+            width: 280px;
+            background: rgba(15, 23, 42, 0.95);
+            backdrop-filter: blur(10px);
+            border-right: 1px solid #334155;
+            height: 100vh;
+            position: fixed;
+            left: 0;
+            top: 0;
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+        }
+
+        .sidebar-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid #334155;
+        }
+
+        .logo {
+            font-size: 1.3rem;
+            font-weight: bold;
+            background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-align: center;
+        }
+
+        .sidebar-content {
+            flex: 1;
+            padding: 1rem 0;
+        }
+
+        .nav-section {
+            margin-bottom: 2rem;
+        }
+
+        .nav-section-title {
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            padding: 0 1.5rem 0.5rem 1.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .nav-link {
+            color: #94a3b8;
+            text-decoration: none;
+            padding: 0.75rem 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            transition: all 0.2s;
+            border-left: 3px solid transparent;
+        }
+
+        .nav-link:hover {
+            background: rgba(100, 116, 139, 0.1);
+            color: #f1f5f9;
+            border-left-color: #3b82f6;
+        }
+
+        .nav-link.active {
+            background: rgba(59, 130, 246, 0.1);
+            color: #3b82f6;
+            border-left-color: #3b82f6;
+        }
+
+        .nav-icon {
+            font-size: 1.2rem;
+            width: 20px;
+            text-align: center;
+        }
+
+        /* Main Content Area */
+        .main-content {
+            flex: 1;
+            margin-left: 280px;
+            min-height: 100vh;
+            background: transparent;
+        }
+
+        .main-header {
+            background: rgba(15, 23, 42, 0.8);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid #334155;
+            padding: 1rem 2rem;
+            position: sticky;
+            top: 0;
+            z-index: 50;
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .page-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #f1f5f9;
+        }
+
+
+
+
+
+        .chat-container {
+            flex: 1;
+            display: flex;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+            gap: 2rem;
+            width: 100%;
+        }
+
+        .chat-main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: rgba(30, 41, 59, 0.5);
+            border-radius: 16px;
+            border: 1px solid #475569;
+            overflow: hidden;
+        }
+
+        .chat-header {
+            background: linear-gradient(135deg, #1e293b, #334155);
+            padding: 1.5rem;
+            border-bottom: 1px solid #475569;
+        }
+
+        .chat-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .chat-subtitle {
+            color: #94a3b8;
+            font-size: 0.95rem;
+        }
+
+        .advisor-status {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-top: 1rem;
+            padding: 0.75rem;
+            background: rgba(34, 197, 94, 0.1);
+            border: 1px solid rgba(34, 197, 94, 0.2);
+            border-radius: 8px;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #22c55e;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+            min-height: 400px;
+            max-height: 500px;
+        }
+
+        .message {
+            display: flex;
+            gap: 1rem;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .message.user {
+            flex-direction: row-reverse;
+        }
+
+        .message-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            flex-shrink: 0;
+        }
+
+        .user .message-avatar {
+            background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+        }
+
+        .assistant .message-avatar {
+            background: linear-gradient(135deg, #059669, #065f46);
+        }
+
+        .message-content {
+            flex: 1;
+            background: rgba(51, 65, 85, 0.3);
+            padding: 1rem 1.25rem;
+            border-radius: 16px;
+            border: 1px solid #475569;
+            max-width: 80%;
+        }
+
+        .user .message-content {
+            background: rgba(59, 130, 246, 0.1);
+            border-color: rgba(59, 130, 246, 0.3);
+        }
+
+        .assistant .message-content {
+            background: rgba(5, 150, 105, 0.1);
+            border-color: rgba(5, 150, 105, 0.3);
+        }
+
+        .message-text {
+            line-height: 1.6;
+            color: #e2e8f0;
+        }
+
+        .message-time {
+            font-size: 0.75rem;
+            color: #94a3b8;
+            margin-top: 0.5rem;
+            text-align: right;
+        }
+
+        .message-type {
+            font-size: 0.7rem;
+            color: #3b82f6;
+            background: rgba(59, 130, 246, 0.1);
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            display: inline-block;
+            margin-bottom: 0.5rem;
+        }
+
+        .chat-input-container {
+            padding: 1.5rem;
+            border-top: 1px solid #475569;
+            background: rgba(15, 23, 42, 0.5);
+        }
+
+        .chat-input-wrapper {
+            display: flex;
+            gap: 1rem;
+            align-items: flex-end;
+        }
+
+        .chat-input {
+            flex: 1;
+            min-height: 44px;
+            max-height: 120px;
+            padding: 0.75rem;
+            background: rgba(51, 65, 85, 0.5);
+            border: 1px solid #475569;
+            border-radius: 12px;
+            color: #e2e8f0;
+            font-size: 0.95rem;
+            resize: none;
+            transition: all 0.2s;
+        }
+
+        .chat-input:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        .send-button {
+            padding: 0.75rem 1.25rem;
+            background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+            border: none;
+            border-radius: 12px;
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .send-button:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+        }
+
+        .send-button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .content-sidebar {
+            width: 320px;
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .sidebar-card {
+            background: rgba(30, 41, 59, 0.5);
+            border: 1px solid #475569;
+            border-radius: 16px;
+            padding: 1.5rem;
+        }
+
+        .sidebar-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .quick-questions {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .quick-question {
+            padding: 0.75rem;
+            background: rgba(51, 65, 85, 0.3);
+            border: 1px solid #475569;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 0.9rem;
+            color: #cbd5e1;
+        }
+
+        .quick-question:hover {
+            background: rgba(59, 130, 246, 0.1);
+            border-color: #3b82f6;
+            color: #e2e8f0;
+        }
+
+        .market-data {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .market-pair {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.5rem;
+            background: rgba(51, 65, 85, 0.2);
+            border-radius: 6px;
+        }
+
+        .pair-name {
+            font-weight: 600;
+            color: #e2e8f0;
+        }
+
+        .pair-price {
+            color: #94a3b8;
+            font-size: 0.9rem;
+        }
+
+        .pair-change {
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .pair-change.positive {
+            color: #22c55e;
+        }
+
+        .pair-change.negative {
+            color: #ef4444;
+        }
+
+        .typing-indicator {
+            display: none;
+            align-items: center;
+            gap: 0.5rem;
+            color: #94a3b8;
+            font-style: italic;
+            padding: 1rem;
+        }
+
+        .typing-dots {
+            display: flex;
+            gap: 0.25rem;
+        }
+
+        .typing-dot {
+            width: 6px;
+            height: 6px;
+            background: #94a3b8;
+            border-radius: 50%;
+            animation: typingPulse 1.4s infinite;
+        }
+
+        .typing-dot:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .typing-dot:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+
+        @keyframes typingPulse {
+            0%, 60%, 100% {
+                opacity: 0.3;
+                transform: scale(1);
+            }
+            30% {
+                opacity: 1;
+                transform: scale(1.2);
+            }
+        }
+
+        .loading-spinner {
+            width: 20px;
+            height: 20px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-top: 2px solid #3b82f6;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .error-message {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            color: #ef4444;
+            padding: 1rem;
+            border-radius: 8px;
+            margin: 1rem 0;
+        }
+
+        /* Main Content Area */
+        .main-content {
+            flex: 1;
+            margin-left: 280px;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        /* Responsive design */
+        @media (max-width: 1024px) {
+            .chat-container {
+                flex-direction: column;
+                padding: 1rem;
+            }
+            
+            .content-sidebar {
+                width: 100%;
+                order: -1;
+            }
+            
+            .main-content {
+                margin-left: 0;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .chat-container {
+                padding: 0.5rem;
+            }
+            
+            .sidebar-card {
+                padding: 1rem;
+            }
+        }
+        /* Sidebar Collapsed State */
+        .sidebar.collapsed {
+            transform: translateX(-280px);
+        }
+
+        .main-content.sidebar-collapsed {
+            margin-left: 0;
+        }
+
+        /* Sidebar Toggle */
+        .sidebar-toggle {
+            position: fixed;
+            top: 1rem;
+            left: 1rem;
+            z-index: 200;
+            background: rgba(30, 41, 59, 0.9);
+            border: 1px solid #475569;
+            border-radius: 8px;
+            padding: 0.75rem;
+            color: #f1f5f9;
+            cursor: pointer;
+            font-size: 1.2rem;
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <!-- Sidebar Toggle Button -->
+    <button class="sidebar-toggle" id="sidebarToggle">☰</button>
+
+    <!-- Sidebar Navigation -->
+    <nav class="sidebar">
+        <div class="sidebar-header">
+            <div class="logo">Quantum Nexus Trading Intelligence</div>
+        </div>
+        
+        <div class="sidebar-content">
+            <div class="nav-section">
+                <div class="nav-section-title">Main</div>
+                <a href="main_dashboard.html" class="nav-link">
+                    <span class="nav-icon">📊</span>
+                    <span>Dashboard</span>
+                </a>
+                <a href="vision_trading_charts.html" class="nav-link">
+                    <span class="nav-icon">👁️</span>
+                    <span>Vision Trading</span>
+                </a>
+            </div>
+
+            <div class="nav-section">
+                <div class="nav-section-title">Trading</div>
+                <a href="trading_center.html" class="nav-link">
+                    <span class="nav-icon">📈</span>
+                    <span>Trading Center</span>
+                </a>
+                <a href="market_intelligence_board.html" class="nav-link">
+                    <span class="nav-icon">🧠</span>
+                    <span>Intelligence</span>
+                </a>
+                <a href="#" class="nav-link active">
+                    <span class="nav-icon">💬</span>
+                    <span>Advisor Chat</span>
+                </a>
+                <a href="ea_management.html" class="nav-link">
+                    <span class="nav-icon">🤖</span>
+                    <span>EA Manager</span>
+                </a>
+                
+            </div>
+
+            <div class="nav-section">
+                <div class="nav-section-title">Analysis</div>
+                <a href="strategy_tester.html" class="nav-link">
+                    <span class="nav-icon">🧪</span>
+                    <span>Strategy Tester</span>
+                </a>
+                <a href="analytics_reports.html" class="nav-link">
+                    <span class="nav-icon">📊</span>
+                    <span>Analytics</span>
+                </a>
+                <a href="smc_analysis.html" class="nav-link">
+                    <span class="nav-icon">🎯</span>
+                    <span>Smart Money Concepts</span>
+                </a>
+            </div>
+
+            <div class="nav-section">
+                <div class="nav-section-title">Tools</div>
+                
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content Area -->
+    <main class="main-content">
+        <div class="main-header">
+            <div class="header-content">
+                <div class="page-title">Forex Financial Advisor</div>
+                <div class="status-indicators">
+                    <div class="status-item">
+                        <span>AI:</span>
+                        <div class="status-dot status-connected" id="ai-status"></div>
+                    </div>
+                    <div style="margin-left: 1rem; font-size: 0.9rem; color: #94a3b8;">
+                        Last Update: <span id="last-update">--:--:--</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Page Content -->
+        <div class="page-content">
+
+        <div class="chat-container">
+            <!-- Main Chat Interface -->
+            <div class="chat-main">
+                <div class="chat-header">
+                    <div class="chat-title">
+                        💼 Professional Forex Financial Advisor
+                    </div>
+                    <div class="chat-subtitle">
+                        Expert guidance on forex trading, risk management, and market analysis
+                    </div>
+                    <div class="advisor-status">
+                        <div class="status-dot"></div>
+                        <span>AI Advisor Online</span>
+                        <span id="advisor-stats" style="margin-left: auto; font-size: 0.8rem;"></span>
+                    </div>
+                </div>
+
+                <div class="chat-messages" id="chat-messages">
+                    <!-- Welcome message -->
+                    <div class="message assistant">
+                        <div class="message-avatar">🧠</div>
+                        <div class="message-content">
+                            <div class="message-type">Welcome Message</div>
+                            <div class="message-text">
+                                <strong>Welcome to your Personal Forex Financial Advisor!</strong><br><br>
+                                I'm here to help you with:
+                                <ul style="margin: 0.5rem 0; padding-left: 1.5rem;">
+                                    <li>📊 Market Analysis & Technical Insights</li>
+                                    <li>🛡️ Risk Management Strategies</li>
+                                    <li>📚 Trading Education & Best Practices</li>
+                                    <li>💡 Personalized Trading Advice</li>
+                                    <li>📈 Portfolio Review & Optimization</li>
+                                </ul>
+                                How can I assist you with your forex trading journey today?
+                            </div>
+                            <div class="message-time">Now</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="typing-indicator" id="typing-indicator">
+                    <div class="message-avatar">🧠</div>
+                    <div style="display: flex; align-items: center; gap: 0.5rem;">
+                        <span>Advisor is analyzing...</span>
+                        <div class="typing-dots">
+                            <div class="typing-dot"></div>
+                            <div class="typing-dot"></div>
+                            <div class="typing-dot"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="chat-input-container">
+                    <div class="chat-input-wrapper">
+                        <textarea 
+                            id="chat-input" 
+                            class="chat-input" 
+                            placeholder="Ask me about forex trading, risk management, market analysis, or any trading questions..."
+                            rows="1"
+                        ></textarea>
+                        <button id="send-button" class="send-button">
+                            <span>Send</span>
+                            <span>📤</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Content Sidebar -->
+            <div class="content-sidebar">
+                <!-- Quick Questions -->
+                <div class="sidebar-card">
+                    <div class="sidebar-title">
+                        💡 Quick Questions
+                    </div>
+                    <div class="quick-questions">
+                        <div class="quick-question" onclick="askQuestion('How should I manage risk in forex trading?')">
+                            🛡️ Risk Management Basics
+                        </div>
+                        <div class="quick-question" onclick="askQuestion('What are the best currency pairs for beginners?')">
+                            💱 Best Pairs for Beginners
+                        </div>
+                        <div class="quick-question" onclick="askQuestion('How do I analyze EURUSD trends?')">
+                            📊 EURUSD Analysis
+                        </div>
+                        <div class="quick-question" onclick="askQuestion('What position size should I use?')">
+                            📏 Position Sizing
+                        </div>
+                        <div class="quick-question" onclick="askQuestion('When are the best trading sessions?')">
+                            🕐 Trading Sessions
+                        </div>
+                        <div class="quick-question" onclick="askQuestion('How do I read economic news?')">
+                            📰 Economic Calendar
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Live Market Data -->
+                <div class="sidebar-card">
+                    <div class="sidebar-title">
+                        📈 Live Market Data
+                    </div>
+                    <div class="market-data" id="market-data">
+                        <div class="market-pair">
+                            <span class="pair-name">EURUSD</span>
+                            <span class="pair-price">Loading...</span>
+                            <span class="pair-change">--</span>
+                        </div>
+                        <div class="market-pair">
+                            <span class="pair-name">GBPUSD</span>
+                            <span class="pair-price">Loading...</span>
+                            <span class="pair-change">--</span>
+                        </div>
+                        <div class="market-pair">
+                            <span class="pair-name">USDJPY</span>
+                            <span class="pair-price">Loading...</span>
+                            <span class="pair-change">--</span>
+                        </div>
+                        <div class="market-pair">
+                            <span class="pair-name">AUDUSD</span>
+                            <span class="pair-price">Loading...</span>
+                            <span class="pair-change">--</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Chat Statistics -->
+                <div class="sidebar-card">
+                    <div class="sidebar-title">
+                        📊 Session Stats
+                    </div>
+                    <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                        <div style="display: flex; justify-content: space-between;">
+                            <span style="color: #94a3b8;">Messages:</span>
+                            <span id="message-count">1</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between;">
+                            <span style="color: #94a3b8;">Session:</span>
+                            <span id="session-time">Just started</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between;">
+                            <span style="color: #94a3b8;">Status:</span>
+                            <span style="color: #22c55e;">Active</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        let messageCount = 1;
+        let sessionStartTime = Date.now();
+        let currentSessionId = null;
+
+        // Initialize the chat
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeChat();
+            loadMarketData();
+            setupEventListeners();
+            updateSessionStats();
+            
+            // Update session stats every minute
+            setInterval(updateSessionStats, 60000);
+            
+            // Update market data every 30 seconds
+            setInterval(loadMarketData, 30000);
+        });
+
+        function initializeChat() {
+            // Generate session ID
+            currentSessionId = `forex_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+            console.log('Chat session initialized:', currentSessionId);
+        }
+
+        function setupEventListeners() {
+            const chatInput = document.getElementById('chat-input');
+            const sendButton = document.getElementById('send-button');
+
+            // Auto-resize textarea
+            chatInput.addEventListener('input', function() {
+                this.style.height = 'auto';
+                this.style.height = Math.min(this.scrollHeight, 120) + 'px';
+            });
+
+            // Send on Enter (without Shift)
+            chatInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    sendMessage();
+                }
+            });
+
+            // Send button click
+            sendButton.addEventListener('click', sendMessage);
+        }
+
+        async function sendMessage() {
+            const chatInput = document.getElementById('chat-input');
+            const message = chatInput.value.trim();
+            
+            if (!message) return;
+
+            // Clear input and reset height
+            chatInput.value = '';
+            chatInput.style.height = '44px';
+
+            // Add user message to chat
+            addMessage(message, 'user');
+
+            // Show typing indicator
+            showTypingIndicator();
+
+            try {
+                // Send to advisor API
+                const response = await fetch('/advisor/chat', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        message: message,
+                        user_id: 'web_user',
+                        session_id: currentSessionId
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+                
+                // Hide typing indicator
+                hideTypingIndicator();
+
+                if (data.success) {
+                    // Handle response - extract content if it's an object
+                    let responseContent = data.response;
+                    if (typeof responseContent === 'object' && responseContent !== null) {
+                        responseContent = responseContent.content || JSON.stringify(responseContent);
+                    }
+                    
+                    // Add advisor response
+                    addMessage(responseContent, 'assistant', data.type || 'general_advisor');
+                } else {
+                    throw new Error(data.error || 'Unknown error');
+                }
+
+            } catch (error) {
+                console.error('Error sending message:', error);
+                hideTypingIndicator();
+                
+                // Add error message
+                addMessage(
+                    `I apologize, but I'm experiencing technical difficulties. As your Forex Financial Advisor, here's some general guidance while we resolve this:\n\n🛡️ **Risk Management Reminder:**\n- Never risk more than 1-2% of your account per trade\n- Always use stop losses\n- Plan your trades and trade your plan\n\nPlease try your question again in a moment.`,
+                    'assistant',
+                    'error'
+                );
+            }
+        }
+
+        function addMessage(content, sender, type = null) {
+            const messagesContainer = document.getElementById('chat-messages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${sender}`;
+
+            const avatar = document.createElement('div');
+            avatar.className = 'message-avatar';
+            avatar.textContent = sender === 'user' ? '👤' : '🧠';
+
+            const messageContent = document.createElement('div');
+            messageContent.className = 'message-content';
+
+            let messageHtml = '';
+            
+            if (type && sender === 'assistant') {
+                messageHtml += `<div class="message-type">${formatMessageType(type)}</div>`;
+            }
+
+            // Convert markdown to HTML for better formatting
+            messageHtml += `<div class="message-text">${formatMessage(content)}</div>`;
+            messageHtml += `<div class="message-time">${new Date().toLocaleTimeString()}</div>`;
+
+            messageContent.innerHTML = messageHtml;
+
+            messageDiv.appendChild(avatar);
+            messageDiv.appendChild(messageContent);
+
+            messagesContainer.appendChild(messageDiv);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+
+            // Update message count
+            messageCount++;
+            updateSessionStats();
+        }
+
+        function formatMessage(content) {
+            // Check if content is valid and is a string
+            if (!content || typeof content !== 'string') {
+                console.warn('formatMessage received invalid content:', content);
+                return String(content || '');
+            }
+            
+            // Simple markdown-like formatting
+            return content
+                .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                .replace(/\*(.*?)\*/g, '<em>$1</em>')
+                .replace(/`(.*?)`/g, '<code style="background: rgba(51, 65, 85, 0.5); padding: 0.2rem 0.4rem; border-radius: 4px;">$1</code>')
+                .replace(/\n/g, '<br>')
+                .replace(/📊|🛡️|💡|⚠️|📈|📉|💰|🎯|🔍|📰|⏰|🚀|💎|🔥|⭐/g, '<span style="font-size: 1.1em;">$&</span>');
+        }
+
+        function formatMessageType(type) {
+            const types = {
+                'market_analysis': '📊 Market Analysis',
+                'risk_management': '🛡️ Risk Management',
+                'educational': '📚 Educational',
+                'trade_suggestion': '💡 Trade Suggestion',
+                'fundamental_analysis': '📰 Fundamental Analysis',
+                'general_advisor': '💼 General Advice',
+                'error': '⚠️ System Message'
+            };
+            return types[type] || '💬 Response';
+        }
+
+        function showTypingIndicator() {
+            document.getElementById('typing-indicator').style.display = 'flex';
+            const messagesContainer = document.getElementById('chat-messages');
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+
+        function hideTypingIndicator() {
+            document.getElementById('typing-indicator').style.display = 'none';
+        }
+
+        function askQuestion(question) {
+            const chatInput = document.getElementById('chat-input');
+            chatInput.value = question;
+            chatInput.focus();
+            
+            // Optionally auto-send
+            setTimeout(() => sendMessage(), 100);
+        }
+
+        async function loadMarketData() {
+            try {
+                // Try to get real market data from QNTI API - fallback to demo data since endpoint doesn't exist
+                try {
+                    const response = await fetch('/api/market-intelligence/insights');
+                    if (response.ok) {
+                        const insights = await response.json();
+                        // Use market intelligence data if available
+                        console.log('Loaded market intelligence insights:', insights.length);
+                    }
+                } catch (e) {
+                    console.log('Market intelligence not available, using demo data');
+                }
+                
+                // Use demo data for now since major-pairs endpoint doesn't exist
+                const demoData = {
+                    EURUSD: { price: 1.08645, change: 0.12 },
+                    GBPUSD: { price: 1.26789, change: -0.08 },
+                    USDJPY: { price: 149.234, change: 0.23 },
+                    AUDUSD: { price: 0.67845, change: -0.15 }
+                };
+                updateMarketDisplay(demoData);
+            } catch (error) {
+                console.error('Error loading market data:', error);
+                // Keep existing display or show error state
+            }
+        }
+
+        function updateMarketDisplay(data) {
+            const marketContainer = document.getElementById('market-data');
+            const pairs = marketContainer.querySelectorAll('.market-pair');
+            
+            pairs.forEach(pair => {
+                const pairName = pair.querySelector('.pair-name').textContent;
+                const priceElement = pair.querySelector('.pair-price');
+                const changeElement = pair.querySelector('.pair-change');
+                
+                if (data[pairName]) {
+                    const pairData = data[pairName];
+                    priceElement.textContent = pairData.price.toFixed(5);
+                    
+                    const change = pairData.change;
+                    changeElement.textContent = `${change > 0 ? '+' : ''}${change.toFixed(2)}%`;
+                    changeElement.className = `pair-change ${change >= 0 ? 'positive' : 'negative'}`;
+                }
+            });
+        }
+
+        function updateSessionStats() {
+            document.getElementById('message-count').textContent = messageCount;
+            
+            const elapsed = Date.now() - sessionStartTime;
+            const minutes = Math.floor(elapsed / 60000);
+            const timeText = minutes < 1 ? 'Just started' : 
+                           minutes < 60 ? `${minutes}m` : 
+                           `${Math.floor(minutes / 60)}h ${minutes % 60}m`;
+            
+            document.getElementById('session-time').textContent = timeText;
+        }
+
+        // Update advisor status UI elements
+        function updateAdvisorStatus(data) {
+            const statusDot = document.querySelector('.status-dot');
+            const statusText = document.querySelector('.advisor-status span:not(#advisor-stats)');
+            const statsElement = document.getElementById('advisor-stats');
+            
+            if (data && data.advisor_online) {
+                // Advisor is online
+                if (statusDot) {
+                    statusDot.style.backgroundColor = '#10b981'; // Green
+                    statusDot.style.boxShadow = '0 0 10px rgba(16, 185, 129, 0.3)';
+                }
+                if (statusText) {
+                    statusText.textContent = 'AI Advisor Online';
+                }
+                if (statsElement && data.stats) {
+                    const activeSessions = data.stats.active_sessions || 0;
+                    statsElement.textContent = `${activeSessions} active session${activeSessions !== 1 ? 's' : ''}`;
+                }
+            } else {
+                // Advisor is offline
+                if (statusDot) {
+                    statusDot.style.backgroundColor = '#ef4444'; // Red
+                    statusDot.style.boxShadow = '0 0 10px rgba(239, 68, 68, 0.3)';
+                }
+                if (statusText) {
+                    statusText.textContent = 'AI Advisor Offline';
+                }
+                if (statsElement) {
+                    statsElement.textContent = 'No active sessions';
+                }
+            }
+        }
+
+        // Check advisor status periodically
+        async function checkAdvisorStatus() {
+            try {
+                console.log('Checking advisor status...');
+                const response = await fetch('/api/advisor/status');
+                const data = await response.json();
+                
+                updateAdvisorStatus(data);
+            } catch (error) {
+                console.error('Failed to check advisor status:', error);
+                updateAdvisorStatus({
+                    advisor_online: false,
+                    stats: {
+                        active_sessions: 0
+                    }
+                });
+            }
+        }
+
+        // Check status every 5 minutes
+        setInterval(checkAdvisorStatus, 300000);
+        checkAdvisorStatus(); // Initial check
+        
+        // Verify function is loaded - Updated 2025-07-23 16:52:02
+        console.log('✅ updateAdvisorStatus function loaded:', typeof updateAdvisorStatus);
+        console.log('✅ QNTI Forex Advisor Chat - JavaScript fixes applied successfully!');
+    </script>
+        </div>
+    </main>
+</body>
+</html> 
