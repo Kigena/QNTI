@@ -7,8 +7,8 @@ Flask-SocketIO==5.3.6
 Flask-CORS==4.0.0
 
 # Data Analysis & ML
-numpy==1.24.3
-pandas==2.0.3
+numpy==1.25.2
+pandas==2.1.1
 scikit-learn==1.3.0
 scipy==1.11.1
 
@@ -19,15 +19,11 @@ httpx==0.24.1
 # Async Processing
 asyncio-mqtt==0.11.1
 
-# Database
-sqlite3  # Built-in with Python
-
 # Computer Vision
 opencv-python==4.8.0.74
 
 # Utilities
 python-dotenv==1.0.0
-pathlib2==2.3.7
 dataclasses-json==0.5.9
 
 # MetaTrader5 - DISABLED FOR CLOUD DEPLOYMENT
